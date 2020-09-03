@@ -170,6 +170,29 @@ public class AppSetupHelper {
      *
      * If you want to reference another appsetup you can create a link to it by using the UUID returned here.
      *
+     * Tries to determine what is the appsetup that should be shown for given application and type and returns it's UUID
+     * for linking purposes. This might be to find a publisher template for 3d appsetup for example.
+     *
+     * @param conn connection to the database
+     * @param applicationName application name to filter by like embedded-3d, geoportal-3d, geoportal
+     * @param type type of the application like ViewTypes.PUBLISH
+     * @return
+     * @throws SQLException when there isn't exactly one match for app/type combo
+     */
+    public static String getUuidForSetup(Connection conn, String applicationName, String type) throws SQLException {
+        Map<Long, String> uuids = getUuidsForSetup(conn, applicationName, ViewTypes.DEFAULT);
+        if (uuids.size() == 1) {
+            return uuids.values().stream().findFirst().get();
+        } else if (uuids.isEmpty()) {
+            throw new SQLException("No results for [app='" + applicationName + "', type='" + type + "']");
+        }
+        throw new SQLException("Too many results for [app='" + applicationName + "', type='" + type + "']");
+    }
+    /**
+     * Note! Use with care, usually you don't need this.
+     *
+     * If you want to reference another appsetup you can create a link to it by using the UUID returned here.
+     *
      * Tries to determine what is the default appsetup that should be shown for given application and returns it's UUID
      * for linking purposes.
      *
@@ -179,17 +202,7 @@ public class AppSetupHelper {
      * @throws SQLException
      */
     public static String getUuidForDefaultSetup(Connection conn, String applicationName) throws SQLException {
-        Map<Long, String> uuids = new HashMap<>();
-        final String sql = "SELECT id, uuid FROM oskari_appsetup WHERE application=? and type=?";
-        try (PreparedStatement statement = conn.prepareStatement(sql)) {
-            statement.setString(1, applicationName);
-            statement.setString(2, ViewTypes.DEFAULT);
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    uuids.put(rs.getLong("id"), rs.getString("uuid"));
-                }
-            }
-        }
+        Map<Long, String> uuids = getUuidsForSetup(conn, applicationName, ViewTypes.DEFAULT);
         if (uuids.size() == 1) {
             return uuids.values().stream().findFirst().get();
         }
@@ -205,6 +218,21 @@ public class AppSetupHelper {
             throw new SQLException ("Couldn't find unique default view. Define default view id in properties view.default or view.default.{application}");
         }
         throw new SQLException ("Couldn't find default view");
+    }
+
+    private static Map<Long, String> getUuidsForSetup(Connection conn, String applicationName, String type) throws SQLException {
+        Map<Long, String> uuids = new HashMap<>();
+        final String sql = "SELECT id, uuid FROM oskari_appsetup WHERE application=? and type=?";
+        try (PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, applicationName);
+            statement.setString(2, type);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    uuids.put(rs.getLong("id"), rs.getString("uuid"));
+                }
+            }
+        }
+        return uuids;
     }
 
     /**
