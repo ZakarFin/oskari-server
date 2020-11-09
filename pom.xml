@@ -1165,6 +1165,7 @@
         <module>service-admin</module>
         <module>service-capabilities-update</module>
 
+        <module>service-usage</module>
         <module>service-search</module>
         <module>service-search-wfs</module>
         <module>service-search-opendata</module>
