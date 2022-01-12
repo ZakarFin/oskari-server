@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -123,6 +124,18 @@ public class TestHelper {
         // BUT there's an issue with cyclic dependencies for Maven that we need to
         // deal with first to get this running
         return ds;
+    }
+
+    public static void migrateTestDB(DataSource ds) {
+        try {
+            // try to dig up TestHelper that is only available while testing to get a mem-based datasource
+            Class helper = Class.forName("org.oskari.helpers.FlywaydbMigrator");
+            Method m = helper.getMethod("migrate", DataSource.class);
+            // TODO: call with DB initializing scripts to actually use this
+            m.invoke(null, ds);
+        } catch (Exception e) {
+            throw new RuntimeException("Migrator not in classpath", e);
+        }
     }
 
     public static DataSource createMemDBforUnitTest(List<String> sqlStatementsForInit) throws SQLException {
