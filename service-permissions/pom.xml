@@ -22,6 +22,17 @@
             <groupId>org.oskari</groupId>
             <artifactId>service-mybatis</artifactId>
         </dependency>
+        <!--
+        Content-resources would be required for the common migration to be run
+           for test db instead of the isolated copies of partial db schema.
+        However it creates a cyclic reference that prevents Maven from compiling.
+
+        <dependency>
+            <groupId>org.oskari</groupId>
+            <artifactId>content-resources</artifactId>
+            <scope>test</scope>
+        </dependency>
+         -->
         <dependency>
             <groupId>org.oskari</groupId>
             <artifactId>shared-test-resources</artifactId>

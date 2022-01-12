@@ -29,6 +29,12 @@ public class PermissionServiceMybatisImplTest {
     public static void init() throws SQLException, IOException, URISyntaxException {
         List<String> sqls = ResourceHelper.readSqlStatements(PermissionServiceMybatisImplTest.class, "/schema.sql");
         DataSource ds = TestHelper.createMemDBforUnitTest(sqls);
+
+        // The DREAM(tm) to get rid of custom schemas and migrate test db with same mechanism as runtime db:
+        /*
+        DataSource ds = TestHelper.createMemDBforUnitTest();
+        TestHelper.migrateTestDB(ds); or FlywaydbMigrator.migrate(ds);
+         */
         permissionService = new PermissionServiceMybatisImpl(ds);
     }
 
