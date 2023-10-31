@@ -278,6 +278,7 @@ public class UserLayerDbServiceMybatisImpl extends UserLayerDbService {
 
     @Override
     public JSONObject getFeatures(int layerId, ReferencedEnvelope bbox, CoordinateReferenceSystem crs) throws ServiceException {
+        Object getFeaturesTimer = UserContentUserLayerService.startTimer("db.getFeatures");
         try (SqlSession session = factory.openSession()) {
             log.debug("getFeatures by bbox: ", bbox);
 
@@ -291,11 +292,16 @@ public class UserLayerDbServiceMybatisImpl extends UserLayerDbService {
                 .orElse(null);
 
             int nativeSrid = getSRID(nativeSrsName);
+            Object findBBOXTimer = UserContentUserLayerService.startTimer("db.findBBOX");
             List<UserLayerData> features = mapper.findAllByLooseBBOX(layerId, bbox.getMinX(), bbox.getMinY(), bbox.getMaxX(), bbox.getMaxY(), nativeSrid);
+            UserContentUserLayerService.stopTimer(findBBOXTimer);
 
+            Object toGeoJSONTimer = UserContentUserLayerService.startTimer("db.toGeoJSON");
             JSONObject featureCollection = this.toGeoJSONFeatureCollection(features, targetSrsName != null ? targetSrsName : nativeSrsName);
+            UserContentUserLayerService.stopTimer(toGeoJSONTimer);
             return featureCollection;
         } catch (Exception e) {
+            UserContentUserLayerService.stopTimer(getFeaturesTimer);
             log.warn(e, "Exception when trying to get features by bounding box ", bbox.getMinX(), bbox.getMinY(), bbox.getMaxX(), bbox.getMaxY());
             throw new ServiceException(e.getMessage());
         }

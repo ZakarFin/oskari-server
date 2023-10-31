@@ -26,6 +26,7 @@ import org.opengis.filter.expression.Expression;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.oskari.geojson.GeoJSONFeatureCollection;
 import org.oskari.geojson.GeoJSONReader;
+import org.oskari.map.userlayer.service.UserContentUserLayerService;
 import org.oskari.map.userlayer.service.UserLayerDataService;
 import org.oskari.map.userlayer.service.UserLayerDbService;
 import org.oskari.service.user.UserLayerService;
@@ -165,11 +166,17 @@ public class UserLayerWFSHelper extends UserLayerService {
         try {
             int id = parseId(layerId);
             JSONObject featureCollectionJSON = service.getFeatures(id, bbox, crs);
+
+            Object featureCollTimer = UserContentUserLayerService.startTimer("helper.featureColl");
             SimpleFeatureCollection featureCollection = featureCollectionJSON == null ?
                 new EmptyFeatureCollection(null) :
                 GeoJSONReader.toFeatureCollection(featureCollectionJSON);
+            UserContentUserLayerService.stopTimer(featureCollTimer);
 
-            return postProcess(featureCollection);
+            Object processCollectionTimer = UserContentUserLayerService.startTimer("helper.processCollection");
+            SimpleFeatureCollection processedCollection = postProcess(featureCollection);
+            UserContentUserLayerService.stopTimer(processCollectionTimer);
+            return processedCollection;
         } catch(Exception e) {
             throw new ServiceException("Failed to get features. ", e);
         }
