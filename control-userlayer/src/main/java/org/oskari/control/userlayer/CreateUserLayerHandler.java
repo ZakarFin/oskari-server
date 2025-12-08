@@ -281,6 +281,7 @@ public class CreateUserLayerHandler extends RestActionHandler {
         if (name == null || name.trim().isEmpty()) {
             return true;
         }
+        // https://stackoverflow.com/questions/13846000/file-separators-of-path-name-of-zipentry
         String[] parts = name.split("/");
         for (int i = 0; i < parts.length; i++) {
             if (parts[i].indexOf('.') == 0) {
