@@ -37,6 +37,11 @@ public class MetadataHelperTest {
         expected.put("http://mydomain.org?test=test&uuid=key2&post=test", "key2");
         expected.put("http://mydomain.org?test=test&Id=key&post=test", "key");
         expected.put("http://mydomain.org?test=test&uuId=Key&post=test", "Key");
+        expected.put("http://mydomain.org/dataset/C73BC2C1-C2CA-4FCA-9171-B8074F2BC2A3", "C73BC2C1-C2CA-4FCA-9171-B8074F2BC2A3");
+        expected.put("http://mydomain.org/dataset/%7BC73BC2C1-C2CA-4FCA-9171-B8074F2BC2A3%7D", "{C73BC2C1-C2CA-4FCA-9171-B8074F2BC2A3}");
+        // java.net.URI breaks at {}
+        expected.put("http://mydomain.org/dataset/{C73BC2C1-C2CA-4FCA-9171-B8074F2BC2A3}", null);
+
         for (String url : expected.keySet()) {
             Assertions.assertEquals(expected.get(url), MetadataHelper.getIdFromMetadataUrl(url), "Url with id returns id value");
         }

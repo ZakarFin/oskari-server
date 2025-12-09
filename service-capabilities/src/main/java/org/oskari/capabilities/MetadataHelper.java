@@ -11,9 +11,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class MetadataHelper {
     private static final Logger LOG = LogFactory.getLogger(MetadataHelper.class);
+    // dash separated hex char sequences
+    private static final Pattern METADATA_ID_VALIDATOR = Pattern.compile("^[0-9A-Fa-f]+(?:-[0-9A-Fa-f]+)*$");
     /**
      * Helper for parsing metadata uuid from url.
      * @param url
@@ -40,7 +43,7 @@ public class MetadataHelper {
                     .orElse(null);
             if (idParam == null) {
                 // param not in url
-                return null;
+                return tryParsingIdFromPath(url);
             }
             List<String> values = params.getOrDefault(idParam, Collections.emptyList());
             if (values.isEmpty()) {
@@ -54,6 +57,40 @@ public class MetadataHelper {
         }
         LOG.debug("Couldn't parse uuid from metadata url:", url);
         return null;
+    }
+
+    private static String tryParsingIdFromPath(String url) {
+        if (url == null || !url.startsWith("http") || url.length() < 11) {
+            return null;
+        }
+        // Parse with URI and getPath() to remove params etc
+        // the url-encoded curly braces will be decoded and saved to db as decoded
+        try {
+            String[] pathParts = new URI(url).getPath().split("/");
+            for (String possibleId : pathParts) {
+                if(couldBeMetadataId(possibleId)) {
+                    return possibleId;
+                }
+            }
+
+        } catch (Exception e) {
+            LOG.debug("Unexpected error converting url-string to uri:", e);
+        }
+
+       return null;
+    }
+
+    private static boolean couldBeMetadataId(String possibleId) {
+        if (possibleId == null || possibleId.length() < 20) {
+            // usually 30+ chars
+            return false;
+        }
+        // URI decodes any URL-encoded bits so we can assume decoded chars here
+        if (possibleId.startsWith("{") && possibleId.endsWith("}")) {
+            possibleId = possibleId.substring(1, possibleId.length() - 1);
+        }
+
+        return METADATA_ID_VALIDATOR.matcher(possibleId).matches();
     }
 
     public static ArrayList<String> getAllowedDomainsList()  {
