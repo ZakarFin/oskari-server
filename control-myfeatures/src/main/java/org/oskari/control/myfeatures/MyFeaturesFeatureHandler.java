@@ -1,18 +1,6 @@
 package org.oskari.control.myfeatures;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-
-import org.oskari.control.myfeatures.dto.CreateMyFeaturesFeature;
-import org.oskari.control.myfeatures.dto.UpdateMyFeaturesFeature;
-import org.oskari.map.myfeatures.service.MyFeaturesService;
-import org.oskari.user.User;
-import org.oskari.util.ObjectMapperProvider;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import fi.nls.oskari.annotation.OskariActionRoute;
 import fi.nls.oskari.control.ActionDeniedException;
 import fi.nls.oskari.control.ActionException;
@@ -23,11 +11,21 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.ResponseHelper;
+import org.oskari.control.myfeatures.dto.CreateMyFeaturesFeature;
+import org.oskari.control.myfeatures.dto.UpdateMyFeaturesFeature;
+import org.oskari.map.myfeatures.service.MyFeaturesService;
+import org.oskari.user.User;
+import org.oskari.util.ObjectMapperProvider;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @OskariActionRoute("MyFeaturesFeature")
 public class MyFeaturesFeatureHandler extends RestActionHandler {
 
-    public static final String PARAM_LAYER_ID = "layer_id";
+    public static final String PARAM_LAYER_ID = "layerId";
     public static final String PARAM_ID = "id";
 
     private MyFeaturesService service;
