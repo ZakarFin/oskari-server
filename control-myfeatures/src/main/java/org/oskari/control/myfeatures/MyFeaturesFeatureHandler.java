@@ -11,6 +11,7 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.ResponseHelper;
+import org.json.JSONObject;
 import org.oskari.control.myfeatures.dto.CreateMyFeaturesFeature;
 import org.oskari.control.myfeatures.dto.UpdateMyFeaturesFeature;
 import org.oskari.map.myfeatures.service.MyFeaturesService;
@@ -76,9 +77,22 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         ResponseHelper.writeJsonResponse(params, om, features);
     }
 
+
+    JSONObject getPayloadAsJSON(ActionParameters params)  throws ActionException {
+        JSONObject payloadJSON = params.getPayLoadJSON();
+        UUID layerId = MyFeaturesLayer.parseLayerId(payloadJSON.optString(PARAM_LAYER_ID, "")).orElse(null);
+        if (layerId == null) {
+            throw new ActionDeniedException("Could not parse layer UUID from " + payloadJSON.getString(PARAM_LAYER_ID));
+        }
+
+        payloadJSON.put(PARAM_LAYER_ID, layerId.toString());
+        return payloadJSON;
+    }
     @Override
     public void handlePost(ActionParameters params) throws ActionException {
-        CreateMyFeaturesFeature createFeature = parsePayload(params, CreateMyFeaturesFeature.class);
+        JSONObject payloadJSON = getPayloadAsJSON(params);
+        CreateMyFeaturesFeature createFeature = parsePayload(payloadJSON.toString(), CreateMyFeaturesFeature.class);
+        UUID layerId = createFeature.getLayerId();
 
         List<String> validationErrors = createFeature.validate();
         if (!validationErrors.isEmpty()) {
@@ -86,8 +100,6 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         }
 
         MyFeaturesFeature feature = createFeature.toDomain(om);
-        UUID layerId = createFeature.getLayerId();
-
         User user = params.getUser();
         if (!canEdit(user, layerId)) {
             throw new ActionDeniedException("User: " + user.getId() + " tried to insert feature to layer " + layerId);
@@ -100,7 +112,9 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
 
     @Override
     public void handlePut(ActionParameters params) throws ActionException {
-        UpdateMyFeaturesFeature updateFeature = parsePayload(params, UpdateMyFeaturesFeature.class);
+        JSONObject payloadJSON = getPayloadAsJSON(params);
+        UpdateMyFeaturesFeature updateFeature = parsePayload(payloadJSON.toString(), UpdateMyFeaturesFeature.class);
+        UUID layerId = updateFeature.getLayerId();
 
         List<String> validationErrors = updateFeature.validate();
         if (!validationErrors.isEmpty()) {
@@ -108,7 +122,6 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         }
 
         MyFeaturesFeature feature = updateFeature.toDomain(om);
-        UUID layerId = updateFeature.getLayerId();
 
         User user = params.getUser();
         if (!canEdit(user, layerId)) {
@@ -141,6 +154,14 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
     <T> T parsePayload(ActionParameters params, Class<T> c) throws ActionParamsException {
         try {
             return om.readValue(params.getPayLoad(), c);
+        } catch (Exception e) {
+            throw new ActionParamsException("Failed to parse payload", e);
+        }
+    }
+
+    <T> T parsePayload(String payload, Class<T> c) throws ActionParamsException {
+        try {
+            return om.readValue(payload, c);
         } catch (Exception e) {
             throw new ActionParamsException("Failed to parse payload", e);
         }
