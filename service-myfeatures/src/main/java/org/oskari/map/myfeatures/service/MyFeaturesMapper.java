@@ -1,10 +1,7 @@
 package org.oskari.map.myfeatures.service;
 
-import java.time.OffsetDateTime;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
+import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
+import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
@@ -14,8 +11,10 @@ import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
-import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 
 public interface MyFeaturesMapper {
 
@@ -77,7 +76,7 @@ public interface MyFeaturesMapper {
     })
     public MyFeaturesFeature findFeatureById(long featureId);
 
-    @Select("UPDATE myfeatures_feature SET updated = #{updated}, fid = #{fid}, geom = #{geometry}, properties = #{properties} WHERE id = #{id}")
+    @Select("UPDATE myfeatures_feature SET updated = #{updated}, fid = #{fid}, geom = #{geometry}, properties = #{properties}::json WHERE id = #{id}")
     public void updateFeature(MyFeaturesFeature feature);
 
     @Delete("DELETE FROM myfeatures_feature WHERE id = #{featureId}")

@@ -48,6 +48,8 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
     public static final String CREATED_PROP_NAME = "created";
     public static final String UPDATED_PROP_NAME = "updated";
 
+    public static final String FID_PROP_NAME = "fid";
+
     private MyFeaturesService service;
 
     private MyFeaturesService getService() {
@@ -99,11 +101,12 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
         b.set(0, feature.getGeometry());
         b.set(1, feature.getCreated());
         b.set(2, feature.getUpdated());
+        b.set(3, feature.getFid());
         for (int i = 0; i < fields.size(); i++) {
             MyFeaturesFieldInfo field = fields.get(i);
-            b.set(i + 3, properties.opt(field.getName()));
+            b.set(i + 4, properties.opt(field.getName()));
         }
-        return b.buildFeature(feature.getFid());
+        return b.buildFeature(new String(Long.toString(feature.getId())));
     }
 
     private static SimpleFeatureType createType(List<MyFeaturesFieldInfo> fields) {
@@ -113,6 +116,7 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
         b.add(GEOM_PROP_NAME, Geometry.class);
         b.add(CREATED_PROP_NAME, OffsetDateTime.class);
         b.add(UPDATED_PROP_NAME, OffsetDateTime.class);
+        b.add(FID_PROP_NAME, String.class);
         b.setDefaultGeometry(GEOM_PROP_NAME);
         for (MyFeaturesFieldInfo field : fields) {
             b.add(field.getName(), field.getType().getOutputBinding());
