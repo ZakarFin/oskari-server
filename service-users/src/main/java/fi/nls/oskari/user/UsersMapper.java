@@ -37,6 +37,8 @@ public interface UsersMapper {
             "   OR first_name ilike '%' || #{query} || '%'" +
             "   OR last_name ilike '%' || #{query} || '%'" +
             "   OR email ilike '%' || #{query} || '%' " +
+            "   OR replace(first_name || last_name, ' ', '') ilike '%' || replace(#{query}, ' ', '') || '%'" +
+            "   OR replace(last_name || first_name, ' ', '') ilike '%' || replace(#{query}, ' ', '') || '%'" +
             " ORDER BY user_name" +
             " LIMIT #{limit} OFFSET #{offset}")
     List<User> findAllPaginatedSearch(@Param("query") String query, @Param("limit") int limit, @Param("offset") int offset);
