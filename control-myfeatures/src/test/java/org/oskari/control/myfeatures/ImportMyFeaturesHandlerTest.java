@@ -44,14 +44,14 @@ public class ImportMyFeaturesHandlerTest {
         List<String> fieldNames = fields.stream().map(MyFeaturesFieldInfo::getName).toList();
 
         for (MyFeaturesFeature myFeature : myFeatures) {
-            assertNotNull(myFeature.getFid());
             assertNotNull(myFeature.getGeometry());
             assertNotNull(myFeature.getProperties());
-            assertEquals(8, myFeature.getProperties().length());
+            // Original id should be an additional property "fid"
+            assertEquals(1 + fields.size(), myFeature.getProperties().length());
         }
 
         Map<String, MyFeaturesFeature> myFeaturesById = myFeatures.stream()
-                .collect(Collectors.toMap(MyFeaturesFeature::getFid, x -> x));
+                .collect(Collectors.toMap(x -> x.getProperties().get("fid").toString(), x -> x));
 
         // Check that we find matching feature by fid and all of their properties match
         for (SimpleFeatureIterator it = sfc.features(); it.hasNext();) {

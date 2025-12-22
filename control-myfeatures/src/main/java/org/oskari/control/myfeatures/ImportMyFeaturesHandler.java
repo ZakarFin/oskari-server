@@ -528,7 +528,6 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
 
     private static MyFeaturesFeature toFeature(SimpleFeature f, List<MyFeaturesFieldInfo> fields) {
         MyFeaturesFeature myFeature = new MyFeaturesFeature();
-        myFeature.setFid(f.getID());
         myFeature.setGeometry((Geometry) f.getDefaultGeometry());
         myFeature.setProperties(toProperties(f, fields));
         return myFeature;
@@ -544,6 +543,7 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
                 addProperty(properties, name, type, value);
             }
         }
+        properties.put(MyFeaturesFieldInfo.FID.getName(), f.getID());
         return properties;
     }
 
@@ -574,9 +574,13 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         WFSLayerOptions options = new WFSLayerOptions();
         options.setDefaultFeatureStyle(style);
 
+        List<MyFeaturesFieldInfo> layerFields = new ArrayList<>(1 + fields.size());
+        layerFields.add(MyFeaturesFieldInfo.FID);
+        layerFields.addAll(fields);
+
         MyFeaturesLayer layer = new MyFeaturesLayer();
         layer.setOwnerUuid(ownerUuid);
-        layer.setLayerFields(fields);
+        layer.setLayerFields(layerFields);
         layer.setLocale(locale);
         layer.setLayerOptions(options);
 
@@ -586,6 +590,10 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
 
     private static Optional<MyFeaturesFieldInfo> attribute(AttributeDescriptor attr) {
         String name = attr.getLocalName();
+        if (MyFeaturesFieldInfo.FID.getName().equalsIgnoreCase(name)) {
+            log.debug("Ignoring reserved attribute:", name);
+            return Optional.empty();
+        }
         Class<?> c = attr.getType().getBinding();
         Optional<MyFeaturesFieldType> type = MyFeaturesFieldType.valueFromBinding(c);
         if (type.isEmpty()) {

@@ -10,7 +10,6 @@ public class MyFeaturesFeature {
     private long id;
     private Instant created;
     private Instant updated;
-    private String fid;
     private Geometry geometry;
     private JSONObject properties;
 
@@ -36,14 +35,6 @@ public class MyFeaturesFeature {
 
     public void setUpdated(Instant updated) {
         this.updated = updated;
-    }
-
-    public String getFid() {
-        return fid;
-    }
-
-    public void setFid(String fid) {
-        this.fid = fid;
     }
 
     public Geometry getGeometry() {

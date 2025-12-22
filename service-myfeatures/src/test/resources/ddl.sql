@@ -22,7 +22,6 @@ CREATE TABLE myfeatures_feature (
 	layer_id uuid,
 	created timestamp with time zone,
 	updated timestamp with time zone,
-	fid varchar(128),
 	geom geometry,
 	properties json,
 	CONSTRAINT pk_myfeatures_feature PRIMARY KEY (id)
