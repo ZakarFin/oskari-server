@@ -7,7 +7,6 @@ import org.w3c.dom.Element;
 
 import javax.xml.stream.XMLStreamException;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -70,9 +69,8 @@ public class WMSCapsParser1_1_1 extends WMSCapsParser {
         value.setBbox(latlonBox);
 
         // <ScaleHint min="1.0" max="60000.0"/>
-        Map<String, String> scaleHints = XmlHelper.getAttributesAsMap(XmlHelper.getFirstChild(layer, "ScaleHint"));
-        value.setMinScale(scaleHints.get("min"));
-        value.setMaxScale(scaleHints.get("max"));
+        // Ignore ScaleHints as they are just hints and possibly errorneusly configured
+
         // if there are other dimensions/extents than time this breaks...
         value.setTimes(parseTimes(XmlHelper.getFirstChild(layer, "Dimension"), XmlHelper.getFirstChild(layer, "Extent")));
 

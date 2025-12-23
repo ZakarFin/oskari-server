@@ -39,6 +39,9 @@ public class WMSCapabilitiesParserTest {
         // Note! 1.1.1 doesn't have the metadata url
         expectedJSON.remove(LayerCapabilitiesOGC.METADATA_URL);
         expectedJSON.remove(LayerCapabilitiesOGC.METADATA_UUID);
+        // 1.1.1 ScaleHint is different from 1.3.0 Min/MaxScaleDenominator and should be ignored
+        expectedJSON.remove("maxScale");
+        expectedJSON.remove("minScale");
         // System.out.println(json);
         Assertions.assertTrue(JSONHelper.isEqual(json, expectedJSON), "JSON should match");
 

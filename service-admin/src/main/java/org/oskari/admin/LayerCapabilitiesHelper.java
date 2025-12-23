@@ -84,9 +84,20 @@ public class LayerCapabilitiesHelper {
         }
         if (layer instanceof LayerCapabilitiesWMS) {
             LayerCapabilitiesWMS wmsCaps = (LayerCapabilitiesWMS) layer;
-            // Check what this comment means from previous impl: "THIS IS ON PURPOSE: min -> max, max -> min"
-            ml.setMaxScale(wmsCaps.getMaxScale());
-            ml.setMinScale(wmsCaps.getMinScale());
+            // Consider scale range 1:50 000 - 1:1000
+            // WMS 1.3.0: minScaleDenominator: 1000, maxScaleDenominator: 50000
+            Double minScaleDenominator = wmsCaps.getMinScale();
+            Double maxScaleDenominator = wmsCaps.getMaxScale();
+            if (isLessThan(maxScaleDenominator, minScaleDenominator)) {
+                // Swap the values if service reported values where maxScaleDenominator < minScaleDenominator
+                double t = maxScaleDenominator;
+                maxScaleDenominator = minScaleDenominator;
+                minScaleDenominator = t;
+            }
+            // Oskari: minScale: 50000, maxScale: 1000
+            // (1:50 000 is smaller scale than 1:1000)
+            ml.setMinScale(maxScaleDenominator);
+            ml.setMaxScale(minScaleDenominator);
         }
         // default style for wms + wmts mostly
         ml.setStyle(layer.getDefaultStyle());
@@ -101,6 +112,10 @@ public class LayerCapabilitiesHelper {
         ml.setCapabilities(CapabilitiesService.toJSON(layer, systemCRSs));
         ml.setCapabilitiesLastUpdated(new Date());
         return ml;
+    }
+
+    private static boolean isLessThan(Double a, Double b) {
+        return a != null && !Double.isNaN(a) && b != null && !Double.isNaN(b) && a < b;
     }
 
     private static List<MapLayerStructure> parseStructureJson(Collection<LayerCapabilitiesWMS> caps, List<String> seen) {
