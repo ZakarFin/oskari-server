@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.referencing.CRS;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -87,5 +88,10 @@ public class ImportMyFeaturesHandlerTest {
         Assertions.assertTrue(ImportMyFeaturesHandler.isFileIgnored(".test.mif"));
         Assertions.assertTrue(ImportMyFeaturesHandler.isFileIgnored(".some/test.mif"));
         Assertions.assertTrue(ImportMyFeaturesHandler.isFileIgnored("some/.test.mif"));
+    }
+
+    @Test
+    void isDefaultFIDWorks() {
+        Assertions.assertTrue(ImportMyFeaturesHandler.isDefaultFID(SimpleFeatureBuilder.createDefaultFeatureId()));
     }
 }
