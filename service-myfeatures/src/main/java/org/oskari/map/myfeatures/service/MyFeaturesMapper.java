@@ -61,32 +61,31 @@ public interface MyFeaturesMapper {
     @Delete("DELETE FROM myfeatures_layer WHERE owner_uuid = #{ownerUuid}")
     public int deleteLayersByOwnerUuid(String ownerUuid);
 
-    @Insert("INSERT INTO myfeatures_feature (layer_id, created, updated, fid, geom, properties) VALUES (#{layerId}, #{feature.created}, #{feature.updated}, #{feature.fid}, #{feature.geometry}, #{feature.properties}::json)")
+    @Insert("INSERT INTO myfeatures_feature (layer_id, created, updated, geom, properties) VALUES (#{layerId}, #{feature.created}, #{feature.updated}, #{feature.geometry}, #{feature.properties}::json)")
     @Options(useGeneratedKeys = true, keyProperty = "feature.id", keyColumn = "id")
     public void insertFeature(UUID layerId, MyFeaturesFeature feature);
 
-    @Select("SELECT id, created, updated, fid, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE id = #{featureId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE id = #{featureId}")
     @Results(id = "MyFeaturesFeatureResult", value = {
         @Result(property="id", column="id", id=true),
         @Result(property="created", column="created"),
         @Result(property="updated", column="updated"),
-        @Result(property="fid", column="fid"),
         @Result(property="geometry", column="geom"),
         @Result(property="properties", column="properties")
     })
     public MyFeaturesFeature findFeatureById(long featureId);
 
-    @Select("UPDATE myfeatures_feature SET updated = #{updated}, fid = #{fid}, geom = #{geometry}, properties = #{properties}::json WHERE id = #{id}")
+    @Select("UPDATE myfeatures_feature SET updated = #{updated}, geom = #{geometry}, properties = #{properties}::json WHERE id = #{id}")
     public void updateFeature(MyFeaturesFeature feature);
 
     @Delete("DELETE FROM myfeatures_feature WHERE id = #{featureId}")
     public void deleteFeature(long featureId);
 
-    @Select("SELECT id, created, updated, fid, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
     @ResultMap("MyFeaturesFeatureResult")
     public List<MyFeaturesFeature> findFeatures(UUID layerId);
 
-    @Select("SELECT id, created, updated, fid, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId} AND geom && ST_MakeEnvelope(#{minX}, #{minY}, #{maxX}, #{maxY})")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId} AND geom && ST_MakeEnvelope(#{minX}, #{minY}, #{maxX}, #{maxY})")
     @ResultMap("MyFeaturesFeatureResult")
     public List<MyFeaturesFeature> findFeaturesByBbox(UUID layerId, double minX, double minY, double maxX, double maxY);
 

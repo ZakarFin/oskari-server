@@ -16,7 +16,6 @@ import fi.nls.oskari.util.JSONHelper;
 public class CreateMyFeaturesFeature {
 
     private UUID layerId;
-    private String fid;
     private Geometry geometry;
     private Map<String, Object> properties;
 
@@ -26,14 +25,6 @@ public class CreateMyFeaturesFeature {
 
     public void setLayerId(UUID layerId) {
         this.layerId = layerId;
-    }
-
-    public String getFid() {
-        return fid;
-    }
-
-    public void setFid(String fid) {
-        this.fid = fid;
     }
 
     public Geometry getGeometry() {
@@ -66,7 +57,6 @@ public class CreateMyFeaturesFeature {
     public MyFeaturesFeature toDomain(ObjectMapper om) throws ActionParamsException {
         try {
             MyFeaturesFeature feature = new MyFeaturesFeature();
-            feature.setFid(fid);
             feature.setGeometry(geometry);
             if (properties != null) {
                 feature.setProperties(JSONHelper.createJSONObject(om.writeValueAsString(properties)));

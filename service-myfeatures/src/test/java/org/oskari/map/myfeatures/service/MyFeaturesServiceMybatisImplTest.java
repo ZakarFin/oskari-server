@@ -109,23 +109,23 @@ public class MyFeaturesServiceMybatisImplTest {
         GeometryFactory gf = new GeometryFactory();
         
         MyFeaturesFeature f1 = new MyFeaturesFeature();
-        f1.setFid("1000");
         f1.setGeometry(gf.createPoint(new Coordinate(23, 68)));
         f1.setProperties(new JSONObject()
+            .put("fid", "1000")
             .put("my_prop", 5)
             .put("my_other_prop", "foo"));
 
         MyFeaturesFeature f2 = new MyFeaturesFeature();
-        f2.setFid("1001");
         f2.setGeometry(gf.createPoint(new Coordinate(24, 69)));
         f2.setProperties(new JSONObject()
+            .put("fid", "1001")
             .put("my_prop", 3)
             .put("my_other_prop", "bar"));
 
         MyFeaturesFeature f3 = new MyFeaturesFeature();
-        f3.setFid("1002");
         f3.setGeometry(gf.createPoint(new Coordinate(25, 70)));
         f3.setProperties(new JSONObject()
+            .put("fid", "1002")
             .put("my_prop", 1)
             .put("my_other_prop", "baz"));
 
@@ -157,9 +157,9 @@ public class MyFeaturesServiceMybatisImplTest {
 
         List<MyFeaturesFeature> features = service.getFeatures(layer.getId());
         Assertions.assertEquals(3, features.size());
-        assertEq(f1, features.stream().filter(x -> x.getFid().equals(f1.getFid())).findAny().get());
-        assertEq(f2, features.stream().filter(x -> x.getFid().equals(f2.getFid())).findAny().get());
-        assertEq(f3, features.stream().filter(x -> x.getFid().equals(f3.getFid())).findAny().get());
+        assertEq(f1, features.stream().filter(x -> x.getProperties().get("fid").equals(f1.getProperties().get("fid"))).findAny().get());
+        assertEq(f2, features.stream().filter(x -> x.getProperties().get("fid").equals(f2.getProperties().get("fid"))).findAny().get());
+        assertEq(f3, features.stream().filter(x -> x.getProperties().get("fid").equals(f3.getProperties().get("fid"))).findAny().get());
         // Check that layer metadata was also updated
         layer = service.getLayer(layer.getId());
         Assertions.assertEquals(3, layer.getFeatureCount());
@@ -189,8 +189,8 @@ public class MyFeaturesServiceMybatisImplTest {
 
         features = service.getFeatures(layer.getId());
         Assertions.assertEquals(2, features.size());
-        assertEq(f1, features.stream().filter(x -> x.getFid().equals(f1.getFid())).findAny().get());
-        assertEq(f2, features.stream().filter(x -> x.getFid().equals(f2.getFid())).findAny().get());
+        assertEq(f1, features.stream().filter(x -> x.getProperties().get("fid").equals(f1.getProperties().get("fid"))).findAny().get());
+        assertEq(f2, features.stream().filter(x -> x.getProperties().get("fid").equals(f2.getProperties().get("fid"))).findAny().get());
         layer = service.getLayer(layer.getId());
         Assertions.assertEquals(2, layer.getFeatureCount());
         Assertions.assertEquals(23, layer.getExtent().getMinX());
@@ -220,7 +220,6 @@ public class MyFeaturesServiceMybatisImplTest {
     }
 
     private static void assertEq(MyFeaturesFeature expected, MyFeaturesFeature actual) {
-        Assertions.assertEquals(expected.getFid(), actual.getFid());
         Assertions.assertEquals(expected.getGeometry(), actual.getGeometry());
         JSONTestHelper.shouldEqual(actual.getProperties(), expected.getProperties());
         Assertions.assertEquals(expected.getCreated(), actual.getCreated());

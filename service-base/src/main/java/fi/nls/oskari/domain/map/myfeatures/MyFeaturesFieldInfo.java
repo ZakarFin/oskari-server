@@ -2,6 +2,13 @@ package fi.nls.oskari.domain.map.myfeatures;
 
 public class MyFeaturesFieldInfo {
 
+    public static final MyFeaturesFieldInfo FID;
+    static {
+        FID = new MyFeaturesFieldInfo();
+        FID.setName("fid");
+        FID.setType(MyFeaturesFieldType.String);
+    }
+
     private String name;
     private MyFeaturesFieldType type;
 
