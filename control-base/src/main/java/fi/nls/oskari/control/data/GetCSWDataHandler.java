@@ -38,10 +38,11 @@ import static fi.nls.oskari.csw.service.CSWService.PROP_SERVICE_URL;
 public class GetCSWDataHandler extends ActionHandler {
     private final Logger log = LogFactory.getLogger(this.getClass());
     
+    public static final String LAYER_ATTRIBUTE_METADATA_URL = "metadataUrl";
+
     private static final String LANG_PARAM = "lang";
     private static final String UUID_PARAM = "uuid";
     private static final String LAYER_ID_PARAM = "layerId";
-    private static final String METADATA_URL_PARAM = "metadataUrl";
     private final String baseUrl = PropertyUtil.getOptional(PROP_SERVICE_URL);
     private final String metadataRatingType = PropertyUtil.getOptional("service.metadata.rating");
     private final String licenseUrlPrefix = PropertyUtil.getOptional("search.channel.METADATA_CATALOGUE_CHANNEL.licenseUrlPrefix");
@@ -102,8 +103,8 @@ public class GetCSWDataHandler extends ActionHandler {
             uuid = getMetadataIdForLayer(layer);
     
             try {
-                if (attributes.has(METADATA_URL_PARAM)) {
-                    url = attributes.getString(METADATA_URL_PARAM);
+                if (attributes.has(LAYER_ATTRIBUTE_METADATA_URL)) {
+                    url = attributes.getString(LAYER_ATTRIBUTE_METADATA_URL);
                 }
             } catch (Exception e) {
                 throw new ActionException("Failed to parse metadataUrl:" + e.getMessage());

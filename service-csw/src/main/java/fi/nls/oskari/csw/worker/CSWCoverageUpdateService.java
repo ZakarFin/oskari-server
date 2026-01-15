@@ -26,7 +26,7 @@ public class CSWCoverageUpdateService extends ScheduledJob {
     private static final Logger log = LogFactory.getLogger(CSWCoverageUpdateService.class);
 
     final OskariLayerService layerService = new OskariLayerServiceMybatisImpl();
-    final private static String PROPERTY_BASE_URL = "service.metadata.url";
+    final private static String PROPERTY_BASE_URL = CSWService.PROP_SERVICE_URL;
 
     @Override
     public void execute(Map<String, Object> params) {

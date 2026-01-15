@@ -6,7 +6,14 @@ import fi.nls.oskari.control.ActionDeniedException;
 import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
 import fi.nls.oskari.control.ActionParamsException;
+import fi.nls.oskari.control.data.GetCSWDataHandler;
 import fi.nls.oskari.control.layer.GetMapLayerGroupsHandler;
+import fi.nls.oskari.csw.dao.OskariLayerMetadataDao;
+import fi.nls.oskari.csw.domain.CSWIsoRecord;
+import fi.nls.oskari.csw.dto.OskariLayerMetadataDto;
+import fi.nls.oskari.csw.service.CSWService;
+import fi.nls.oskari.db.DatasourceHelper;
+
 import org.oskari.user.User;
 import fi.nls.oskari.domain.map.DataProvider;
 import fi.nls.oskari.domain.map.OskariLayer;
@@ -47,9 +54,11 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
     // Response from service
     private static final String KEY_UPDATE_CAPA_FAIL = "updateCapabilitiesFail";
     private static final String KEY_PERMISSIONS_FAIL = "insertPermissionsFail";
+    private static final String KEY_UPDATE_METADATA_FAIL = "updateMetadataFail";
     private static final String ERROR_NO_LAYER_WITH_ID = "layer_not_found";
     private OskariLayerService mapLayerService;
     private DataProviderService dataProviderService;
+    private OskariLayerMetadataDao metadataDao;
 
     @Override
     public void init() {
@@ -62,6 +71,11 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
             dataProviderService = OskariComponentManager.getComponentOfType(DataProviderService.class);
         } catch (Exception e) {
             throw new ServiceRuntimeException("Exception occured while initializing data provider service", e);
+        }
+        try {
+            metadataDao = new OskariLayerMetadataDao(DatasourceHelper.getInstance().getDataSource());
+        } catch (Exception e) {
+            throw new ServiceRuntimeException("Exception occured while initializing metadata data access object", e);
         }
         super.init();
     }
@@ -104,6 +118,8 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         MapLayerPermissionsHelper.setLayerPermissions(result.id, layer.getRole_permissions());
         MapLayerGroupsHelper.setGroupsForLayer(result.id, layer.getGroup_ids());
 
+        boolean metadataUpdateOK = refreshLayerMetadata(layer.getMetadataid(), layer.getAttributes());
+
         OskariLayer ml = mapLayerService.find(result.id);
         if (ml == null) {
             throw new ActionParamsException("Couldn't get the saved layer from DB - id:" + result.id, ERROR_NO_LAYER_WITH_ID);
@@ -126,9 +142,16 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
             // NOTE! only tell if permissions failed, this probably needs some refactoring to be useful
             output.setWarn(KEY_PERMISSIONS_FAIL);
         }
+
+        if (!metadataUpdateOK && output.getWarn() == null) {
+            // Currently only single warning is supported, don't override previous warning (of higher priority)
+            output.setWarn(KEY_UPDATE_METADATA_FAIL);
+        }
+
         flushLayerListCache();
         writeResponse(params, output);
     }
+
 
     @Override
     public void handleDelete(ActionParameters params) throws ActionException {
@@ -410,11 +433,48 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         }
     }
 
+    /**
+     * @return true if ok, false if not
+     */
+    private boolean refreshLayerMetadata(String metadataid, Map<String, Object> attributes) {
+        if (metadataid == null || metadataid.trim().isBlank()) {
+            return true;
+        }
+
+        String defaultBaseURL = PropertyUtil.getOptional(CSWService.PROP_SERVICE_URL);
+        String baseURLOverrideAttribute = GetCSWDataHandler.LAYER_ATTRIBUTE_METADATA_URL;
+
+        String baseURL = attributes.get(baseURLOverrideAttribute) != null
+            ? attributes.get(baseURLOverrideAttribute).toString()
+            : defaultBaseURL;
+        if (baseURL == null || baseURL.trim().isBlank()) {
+            return true;
+        }
+
+        String lang = PropertyUtil.getDefaultLanguage();
+        try {
+            CSWService csw = new CSWService(baseURL);
+            CSWIsoRecord rec = csw.getRecordById(metadataid, lang);
+
+            OskariLayerMetadataDto dto = new OskariLayerMetadataDto();
+            dto.metadataId = metadataid;
+            dto.json = rec.toJSON().toString();
+            dto.wkt = rec.getIdentifications().stream().findAny()
+                .map(x -> x.getExtents().getEnvelope().toText())
+                .orElse(null);
+
+            metadataDao.saveMetadata(dto);
+            return true;
+        } catch (Exception e) {
+            LOG.warn(e, "CSW metadata handling failed, baseURL", baseURL, "id", metadataid);
+            return false;
+        }
+    }
+
     private class Result {
         int id;
         boolean permissions = true;
         boolean keywords = true;
     }
-
 
 }
