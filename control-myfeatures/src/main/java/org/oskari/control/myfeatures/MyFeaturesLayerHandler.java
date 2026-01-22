@@ -1,19 +1,7 @@
 package org.oskari.control.myfeatures;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.json.JSONObject;
-import org.oskari.control.myfeatures.dto.CreateMyFeaturesLayer;
-import org.oskari.control.myfeatures.dto.UpdateMyFeaturesLayer;
-import org.oskari.map.myfeatures.service.MyFeaturesService;
-import org.oskari.user.User;
-import org.oskari.util.ObjectMapperProvider;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import fi.nls.oskari.annotation.OskariActionRoute;
 import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
@@ -24,6 +12,17 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayerFullInfo;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayerInfo;
 import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.ResponseHelper;
+import org.json.JSONObject;
+import org.oskari.control.myfeatures.dto.CreateMyFeaturesLayer;
+import org.oskari.control.myfeatures.dto.UpdateMyFeaturesLayer;
+import org.oskari.map.myfeatures.service.MyFeaturesService;
+import org.oskari.user.User;
+import org.oskari.util.ObjectMapperProvider;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @OskariActionRoute("MyFeaturesLayer")
 public class MyFeaturesLayerHandler extends RestActionHandler {
@@ -94,7 +93,15 @@ public class MyFeaturesLayerHandler extends RestActionHandler {
         layer.setOwnerUuid(params.getUser().getUuid());
         layer.setLayerFields(createLayer.getLayerFields());
         layer.setLocale(new JSONObject(createLayer.getLocale()));
-        layer.getLayerOptions().setDefaultFeatureStyle(createLayer.getStyle());
+
+        JSONObject jsonStyle;
+        try {
+            jsonStyle = new JSONObject(om.writeValueAsString(createLayer.getStyle()));
+            layer.getLayerOptions().setDefaultFeatureStyle(jsonStyle);
+
+        } catch (JsonProcessingException e) {
+            throw new ActionParamsException("Failed to parse style from payload", e);
+        }
 
         service.createLayer(layer);
 
