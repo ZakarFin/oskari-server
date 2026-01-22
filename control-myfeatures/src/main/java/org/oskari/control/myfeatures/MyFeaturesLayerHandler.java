@@ -96,8 +96,7 @@ public class MyFeaturesLayerHandler extends RestActionHandler {
 
         JSONObject jsonStyle;
         try {
-            ObjectMapper jsonMapper = new ObjectMapper();
-            jsonStyle = new JSONObject(jsonMapper.writeValueAsString(createLayer.getStyle()));
+            jsonStyle = new JSONObject(om.writeValueAsString(createLayer.getStyle()));
             layer.getLayerOptions().setDefaultFeatureStyle(jsonStyle);
 
         } catch (JsonProcessingException e) {
