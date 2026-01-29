@@ -1,10 +1,12 @@
 package fi.nls.oskari.control.admin;
 
+import fi.nls.oskari.csw.dao.OskariLayerMetadataDao;
 import fi.nls.oskari.domain.map.OskariLayer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class LayerAdminHandlerTest extends AbstractLayerAdminHandlerTest {
     @BeforeEach
     public void setup() throws Exception {
         setupMocks();
+        handler.setMetadataDao(Mockito.mock(OskariLayerMetadataDao.class));
         handler.init();
     }
 

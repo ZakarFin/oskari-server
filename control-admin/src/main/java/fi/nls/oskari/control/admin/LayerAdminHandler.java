@@ -72,12 +72,18 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         } catch (Exception e) {
             throw new ServiceRuntimeException("Exception occured while initializing data provider service", e);
         }
-        try {
-            metadataDao = new OskariLayerMetadataDao(DatasourceHelper.getInstance().getDataSource());
-        } catch (Exception e) {
-            throw new ServiceRuntimeException("Exception occured while initializing metadata data access object", e);
+        if (metadataDao == null) {
+            try {
+                metadataDao = new OskariLayerMetadataDao(DatasourceHelper.getInstance().getDataSource());
+            } catch (Exception e) {
+                throw new ServiceRuntimeException("Exception occured while initializing metadata data access object", e);
+            }
         }
         super.init();
+    }
+
+    public void setMetadataDao(OskariLayerMetadataDao metadataDao) {
+        this.metadataDao = metadataDao;
     }
 
     private void flushLayerListCache() {
