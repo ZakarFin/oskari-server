@@ -7,6 +7,11 @@ import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
 import fi.nls.oskari.control.ActionParamsException;
 import fi.nls.oskari.control.layer.GetMapLayerGroupsHandler;
+import fi.nls.oskari.csw.dao.OskariLayerMetadataDao;
+import fi.nls.oskari.csw.helper.CSW;
+import fi.nls.oskari.csw.helper.CSW.RefreshResult;
+import fi.nls.oskari.db.DatasourceHelper;
+
 import org.oskari.user.User;
 import fi.nls.oskari.domain.map.DataProvider;
 import fi.nls.oskari.domain.map.OskariLayer;
@@ -47,9 +52,13 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
     // Response from service
     private static final String KEY_UPDATE_CAPA_FAIL = "updateCapabilitiesFail";
     private static final String KEY_PERMISSIONS_FAIL = "insertPermissionsFail";
+    private static final String KEY_UPDATE_METADATA_NO_REC = "updateMetadataNoRec";
+    private static final String KEY_UPDATE_METADATA_NO_GEOM = "updateMetadataNoGeom";
+    private static final String KEY_UPDATE_METADATA_FAIL = "updateMetadataFail";
     private static final String ERROR_NO_LAYER_WITH_ID = "layer_not_found";
     private OskariLayerService mapLayerService;
     private DataProviderService dataProviderService;
+    private OskariLayerMetadataDao metadataDao;
 
     @Override
     public void init() {
@@ -63,7 +72,18 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         } catch (Exception e) {
             throw new ServiceRuntimeException("Exception occured while initializing data provider service", e);
         }
+        if (metadataDao == null) {
+            try {
+                metadataDao = new OskariLayerMetadataDao(DatasourceHelper.getInstance().getDataSource());
+            } catch (Exception e) {
+                throw new ServiceRuntimeException("Exception occured while initializing metadata data access object", e);
+            }
+        }
         super.init();
+    }
+
+    public void setMetadataDao(OskariLayerMetadataDao metadataDao) {
+        this.metadataDao = metadataDao;
     }
 
     private void flushLayerListCache() {
@@ -94,6 +114,7 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
     @Override
     public void handlePost(ActionParameters params) throws ActionException {
         MapLayerAdminInput layer = LayerAdminJSONHelper.inputFromJSON(params.getPayLoad());
+
         boolean isExisting = layer.getId() != null && layer.getId() > 0;
         Result result;
         if (isExisting) {
@@ -101,12 +122,15 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         } else {
             result = insertLayer(params, layer);
         }
-        MapLayerPermissionsHelper.setLayerPermissions(result.id, layer.getRole_permissions());
-        MapLayerGroupsHelper.setGroupsForLayer(result.id, layer.getGroup_ids());
+        MapLayerPermissionsHelper.setLayerPermissions(result.layer.getId(), layer.getRole_permissions());
+        MapLayerGroupsHelper.setGroupsForLayer(result.layer.getId(), layer.getGroup_ids());
 
-        OskariLayer ml = mapLayerService.find(result.id);
+        RefreshResult metadataUpdate = CSW.refreshLayerMetadata(metadataDao, result.layer);
+
+        // Fetch a clean copy of the layer after all "side-updates"
+        OskariLayer ml = mapLayerService.find(result.layer.getId());
         if (ml == null) {
-            throw new ActionParamsException("Couldn't get the saved layer from DB - id:" + result.id, ERROR_NO_LAYER_WITH_ID);
+            throw new ActionParamsException("Couldn't get the saved layer from DB - id:" + result.layer.getId(), ERROR_NO_LAYER_WITH_ID);
         }
 
         AuditLog audit = AuditLog.user(params.getClientIp(), params.getUser())
@@ -126,8 +150,29 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
             // NOTE! only tell if permissions failed, this probably needs some refactoring to be useful
             output.setWarn(KEY_PERMISSIONS_FAIL);
         }
+
+        // Currently only single warning is supported, don't override previous warning (of higher priority)
+        if (output.getWarn() == null && getRefreshMetadataWarning(metadataUpdate) != null) {
+            output.setWarn(getRefreshMetadataWarning(metadataUpdate));
+        }
+
         flushLayerListCache();
         writeResponse(params, output);
+    }
+
+    private static String getRefreshMetadataWarning(CSW.RefreshResult result) {
+        switch (result) {
+            case RECORD_NOT_FOUND:
+                return KEY_UPDATE_METADATA_NO_REC;
+            case GEOMETRY_NOT_FOUND:
+                return KEY_UPDATE_METADATA_NO_GEOM;
+            case FAILED:
+                return KEY_UPDATE_METADATA_FAIL;
+            case SKIPPED:
+            case OK:
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -217,7 +262,7 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         OskariLayer ml = getMapLayer(params.getUser(), layer.getId());
 
         Result result = new Result();
-        result.id = ml.getId();
+        result.layer = ml;
 
         mergeInputToOskariLayer(ml, layer);
         updateCapabilities(ml);
@@ -305,7 +350,7 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
         }
 
         Result result = new Result();
-        result.id = layerId;
+        result.layer = ml;
 
         // insert keywords
         try {
@@ -411,10 +456,9 @@ public class LayerAdminHandler extends AbstractLayerAdminHandler {
     }
 
     private class Result {
-        int id;
+        OskariLayer layer;
         boolean permissions = true;
         boolean keywords = true;
     }
-
 
 }
