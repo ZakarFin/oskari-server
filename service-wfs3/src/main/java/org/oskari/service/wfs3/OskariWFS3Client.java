@@ -135,6 +135,7 @@ public class OskariWFS3Client {
             boolean ignoreGeometryProperties = true;
             SimpleFeatureType schema = GeoJSONSchemaDetector.getSchema(geojson, crs, ignoreGeometryProperties);
             SimpleFeatureCollection sfc = GeoJSONReader2.toFeatureCollection(geojson, schema, transformCRS84ToTargetCRS, postFilter);
+            sfc = new CRSAwareSimpleFeatureCollection(sfc, crs);
             numFeatures += sfc.size();
             pages.add(sfc);
             String next = getLinkHref(geojson, "next");
@@ -147,6 +148,7 @@ public class OskariWFS3Client {
                 IOHelper.validateResponse(conn, CONTENT_TYPE_GEOJSON);
                 geojson = readMap(conn);
                 sfc = GeoJSONReader2.toFeatureCollection(geojson, schema, transformCRS84ToTargetCRS, postFilter);
+                sfc = new CRSAwareSimpleFeatureCollection(sfc, crs);
                 numFeatures += sfc.size();
                 pages.add(sfc);
                 next = getLinkHref(geojson, "next");

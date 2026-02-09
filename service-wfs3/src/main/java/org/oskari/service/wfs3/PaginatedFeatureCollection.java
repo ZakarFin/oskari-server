@@ -49,7 +49,19 @@ public class PaginatedFeatureCollection implements SimpleFeatureCollection {
 
     @Override
     public ReferencedEnvelope getBounds() {
-        throw new UnsupportedOperationException();
+        ReferencedEnvelope e = null;
+        for (SimpleFeatureCollection page : pages) {
+            ReferencedEnvelope pageBounds = page.getBounds();
+            if (pageBounds == null) {
+                continue;
+            }
+            if (e == null) {
+                e = pageBounds;
+            } else {
+                e.expandToInclude(pageBounds);
+            }
+        }
+        return e;
     }
 
     @Override

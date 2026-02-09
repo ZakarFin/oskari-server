@@ -60,6 +60,8 @@ public class OskariWFS3ClientTest {
         RectangleIntersects ri = new RectangleIntersects(JTS.toGeometry(bbox));
 
         SimpleFeatureCollection sfc = OskariWFS3Client.getFeatures(layer, bbox, webmerc, null);
+        Assertions.assertNotNull(sfc.getBounds());
+        Assertions.assertEquals(webmerc, sfc.getBounds().getCoordinateReferenceSystem());
         Assertions.assertEquals(3, sfc.size(), "Expect three features to hit our bbox");
         try (SimpleFeatureIterator it = sfc.features()) {
             while (it.hasNext()) {
