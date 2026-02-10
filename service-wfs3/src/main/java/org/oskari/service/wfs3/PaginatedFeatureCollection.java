@@ -6,15 +6,20 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.metadata.i18n.ErrorKeys;
+import org.geotools.referencing.CRS;
 import org.geotools.api.feature.FeatureVisitor;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.filter.Filter;
 import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.geometry.MismatchedReferenceSystemException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.util.ProgressListener;
 
 public class PaginatedFeatureCollection implements SimpleFeatureCollection {
@@ -23,6 +28,7 @@ public class PaginatedFeatureCollection implements SimpleFeatureCollection {
     private final SimpleFeatureType schema;
     private final String collectionId;
     private final int maxSize;
+    private ReferencedEnvelope bounds;
 
     public PaginatedFeatureCollection(List<SimpleFeatureCollection> pages,
             SimpleFeatureType schema, String collectionId, int maxSize) {
@@ -49,19 +55,31 @@ public class PaginatedFeatureCollection implements SimpleFeatureCollection {
 
     @Override
     public ReferencedEnvelope getBounds() {
-        ReferencedEnvelope e = null;
-        for (SimpleFeatureCollection page : pages) {
-            ReferencedEnvelope pageBounds = page.getBounds();
-            if (pageBounds == null) {
-                continue;
-            }
-            if (e == null) {
-                e = pageBounds;
-            } else {
-                e.expandToInclude(pageBounds);
+        if (bounds == null) {
+            bounds = pages.stream().collect(Collectors.reducing(
+                new ReferencedEnvelope(),
+                SimpleFeatureCollection::getBounds,
+                PaginatedFeatureCollection::include
+            ));
+        }
+        return bounds;
+    }
+
+    /**
+     * {@link ReferencedEnvelope#include(org.geotools.api.geometry.BoundingBox)} but for ReferencedEnvelope
+     */
+    private static ReferencedEnvelope include(ReferencedEnvelope a, ReferencedEnvelope b) {
+        CoordinateReferenceSystem ca = a.getCoordinateReferenceSystem();
+        CoordinateReferenceSystem cb = b.getCoordinateReferenceSystem();
+        if (ca == null) {
+            a.setCoordinateReferenceSystem(cb);
+        } else if (cb != null) {
+            if (!CRS.isEquivalent(ca, cb)) {
+                throw new MismatchedReferenceSystemException(ErrorKeys.MISMATCHED_COORDINATE_REFERENCE_SYSTEM);
             }
         }
-        return e;
+        a.expandToInclude(b);
+        return a;
     }
 
     @Override

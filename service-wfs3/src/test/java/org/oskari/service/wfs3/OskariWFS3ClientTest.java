@@ -9,6 +9,7 @@ import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,22 @@ public class OskariWFS3ClientTest {
                 Assertions.assertTrue(ri.intersects(g));
             }
         }
+
+        // Test that PaginatedFeatureCollection seems to work (requires reducing OskariWFS3Client.MIN_PAGE_SIZE to 1 or 2)
+        layer.setAttributes(new JSONObject().put("pageSize", 2));
+        sfc = OskariWFS3Client.getFeatures(layer, bbox, webmerc, null);
+        Assertions.assertEquals(PaginatedFeatureCollection.class, sfc.getClass());
+        Assertions.assertNotNull(sfc.getBounds());
+        Assertions.assertEquals(webmerc, sfc.getBounds().getCoordinateReferenceSystem());
+        Assertions.assertEquals(3, sfc.size(), "Expect three features to hit our bbox");
+        try (SimpleFeatureIterator it = sfc.features()) {
+            while (it.hasNext()) {
+                SimpleFeature f = it.next();
+                Geometry g = (Geometry) f.getDefaultGeometry();
+                Assertions.assertTrue(ri.intersects(g));
+            }
+        }
+
     }
 
 }
