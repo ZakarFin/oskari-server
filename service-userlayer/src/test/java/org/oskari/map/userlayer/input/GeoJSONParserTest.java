@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
+import org.oskari.map.userlayer.service.UserLayerException;
 
 import fi.nls.oskari.service.ServiceException;
 
@@ -46,6 +47,37 @@ public class GeoJSONParserTest {
         Assertions.assertEquals(2220954.29385408, first.x, 1e6);
         Assertions.assertEquals(1.111190502475099E7, first.y, 1e6);
         Assertions.assertTrue(Double.isNaN(first.z));
+    }
+
+    @Test
+    public void testParseNoCrs() throws ServiceException, URISyntaxException, NoSuchAuthorityCodeException, FactoryException {
+        File file = new File(GeoJSONParserTest.class.getResource("myplaces_export_no_crs.json").toURI());
+        CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:3067");
+
+        GeoJSONParser parser = new GeoJSONParser();
+
+        // No sourceCRS available (from user or detected from file)
+        Assertions.assertThrows(UserLayerException.class, () -> parser.parse(file, null, targetCRS));
+
+        // Override sourceCRS
+        CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:3857");
+        SimpleFeatureCollection fc = parser.parse(file, sourceCRS, targetCRS);
+
+        CoordinateReferenceSystem crs = fc.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
+        Assertions.assertEquals(targetCRS, crs);
+
+        SimpleFeature f = fc.features().next();
+        Geometry geom = (Geometry) f.getDefaultGeometry();
+        Assertions.assertTrue(geom instanceof MultiPolygon);
+        MultiPolygon mp = (MultiPolygon) geom;
+        Assertions.assertEquals(1, mp.getNumGeometries());
+        Polygon p = (Polygon) mp.getGeometryN(0);
+        CoordinateSequence exterior = p.getExteriorRing().getCoordinateSequence();
+        Coordinate first = exterior.getCoordinate(0);
+
+        // Coordinate should have been transformed
+        Assertions.assertNotEquals(2220954.29385408, first.x, 1e6);
+        Assertions.assertNotEquals(1.111190502475099E7, first.y, 1e6);
     }
 
 }
