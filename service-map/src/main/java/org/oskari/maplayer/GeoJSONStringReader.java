@@ -40,8 +40,12 @@ public class GeoJSONStringReader {
             crs = GeoJSONSchemaDetector.detectCrs(geojsonAsMap);
         }
         boolean ignoreGeometryProperties = true;
-        SimpleFeatureType schema = GeoJSONSchemaDetector.getSchema(geojsonAsMap, crs, ignoreGeometryProperties);
-        return GeoJSONReader2.toFeatureCollection(geojsonAsMap, schema);
+        try {
+            SimpleFeatureType schema = GeoJSONSchemaDetector.getSchema(geojsonAsMap, crs, ignoreGeometryProperties);
+            return GeoJSONReader2.toFeatureCollection(geojsonAsMap, schema);
+        } catch (NullPointerException e) {
+            throw new IllegalArgumentException("Input was not GeoJSON");
+        }
     }
 
     private static Map<String, Object> loadJSONResource(InputStream in) throws Exception {
