@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.referencing.CRS;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
@@ -334,6 +335,40 @@ public class GeoJSONSchemaDetector {
             if (o != null && o instanceof Map) {
                 properties.put(key, mapper.apply((Map<String, Object>) o));
             }
+        }
+    }
+
+    /**
+     * Try to detect coordinate refence system from JSON file
+     * Simply looks for Named CRS object from root level or fallback to CRS84
+     */
+    public static CoordinateReferenceSystem detectCrs(Map<String, Object> obj) {
+        CoordinateReferenceSystem crs84 = getCRS84();
+
+        Map<String, Object> crs = GeoJSONUtil.getMap(obj, "crs");
+        if (crs == null || !"name".equals(GeoJSONUtil.getString(crs, "type"))) {
+            return crs84;
+        }
+
+        Map<String, Object> properties = GeoJSONUtil.getMap(crs, "properties");
+        if (properties == null || !properties.containsKey("name")) {
+            return crs84;
+        }
+
+        try {
+            String name = GeoJSONUtil.getString(properties, "name");
+            return CRS.decode(name);
+        } catch (Exception e) {
+            return crs84;
+        }
+    }
+
+    private static CoordinateReferenceSystem getCRS84() {
+        try {
+            return CRS.decode("EPSG:4326", true);
+        } catch (Exception e) {
+            // Should never happen
+            throw new RuntimeException(e);
         }
     }
 
