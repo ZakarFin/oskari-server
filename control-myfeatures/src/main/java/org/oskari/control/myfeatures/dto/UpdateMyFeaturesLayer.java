@@ -14,6 +14,7 @@ public class UpdateMyFeaturesLayer {
     private String id;
     private Map<String, Map<String, Object>> locale;
     private Map<String, Object> style;
+    private Map<String, Map<String, Object>> attributes;
 
     public String getId() {
         return id;
@@ -55,4 +56,11 @@ public class UpdateMyFeaturesLayer {
         return errors;
     }
 
+    public Map<String, Map<String, Object>> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, Map<String, Object>> attributes) {
+        this.attributes = attributes;
+    }
 }

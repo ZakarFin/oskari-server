@@ -1,6 +1,7 @@
 package org.oskari.control.myfeatures;
 
 import fi.nls.oskari.annotation.Oskari;
+import org.json.JSONArray;
 import org.oskari.user.User;
 
 import fi.nls.oskari.domain.map.OskariLayer;
@@ -34,11 +35,7 @@ import org.oskari.map.myfeatures.service.MyFeaturesService;
 import org.oskari.service.user.UserLayerService;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Oskari
@@ -218,19 +215,60 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
         List<FeatureProperties> props = new ArrayList<>();
 
         int i = 0;
+        JSONObject attributes = layer.getAttributes();
+
         for (MyFeaturesFieldInfo field : layer.getLayerFields()) {
             FeatureProperties p = new FeatureProperties();
             p.name = field.getName();
             p.type = field.getType().getSimpleType();
             p.rawType = field.getType().getOutputBinding().getName();
-            p.label = field.getName();
-            p.hidden = false;
-            p.format = null;
-            p.order = i++;
+            p.label = getLocalizedName(field, attributes, lang);
+            p.hidden = getHidden(field, attributes);
+            p.format = getFieldFormat(field, attributes);
+            p.order = getFieldOrder(field, attributes, i);
             props.add(p);
         }
 
         return props;
     }
 
+    private String getLocalizedName(MyFeaturesFieldInfo field, JSONObject attributes, String lang) {
+        JSONObject locale = Optional.ofNullable(attributes.optJSONObject("data"))
+                .map(o -> o.optJSONObject("locale"))
+                .map(o -> o.optJSONObject(lang, null)).orElse(null);
+        return locale == null ? field.getName() : locale.optString(field.getName(), field.getName());
+    }
+
+    private Boolean getHidden(MyFeaturesFieldInfo field, JSONObject attributes) {
+        List<String> list = getFilter(attributes);
+        return !list.contains(field.getName());
+    }
+
+    private Map<String, Object> getFieldFormat(MyFeaturesFieldInfo field, JSONObject attributes) {
+        JSONObject formatJSON = Optional.ofNullable(attributes.optJSONObject("data"))
+                .map(o -> o.optJSONObject("format"))
+                .map(o -> o.optJSONObject(field.getName())).orElse(null);
+        return formatJSON != null ? formatJSON.toMap() : null;
+    }
+
+    private List<String> getFilter(JSONObject attributes) {
+        JSONArray filter = Optional.ofNullable(attributes.optJSONObject("data"))
+                .map(o -> o.optJSONObject("filter"))
+                .map(o -> o.optJSONArray("default")).orElse(null);
+        List<String> list = filter == null
+                ? Collections.emptyList()
+                : filter.toList().stream()
+                .map(Object::toString)
+                .toList();
+        return list;
+    }
+
+    private int getFieldOrder(MyFeaturesFieldInfo field, JSONObject attributes, int index) {
+        List<String> list = getFilter(attributes);
+        if (!list.contains(field.getName())) {
+            return index;
+        }
+
+        return list.indexOf(field.getName());
+    }
 }
