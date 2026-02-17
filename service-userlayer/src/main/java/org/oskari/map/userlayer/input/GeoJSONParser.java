@@ -12,7 +12,7 @@ import fi.nls.oskari.service.ServiceException;
 
 public class GeoJSONParser implements FeatureCollectionParser {
 
-    public static final String SUFFIX = "JSON";
+    public static final String SUFFIX = "GEOJSON";
 
     @Override
     public String getSuffix() {

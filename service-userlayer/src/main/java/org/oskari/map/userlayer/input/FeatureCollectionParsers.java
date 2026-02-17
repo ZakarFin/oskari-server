@@ -37,6 +37,8 @@ public class FeatureCollectionParsers {
         case MIFParser.SUFFIX:
         case SHPParser.SUFFIX:
         case GPKGParser.SUFFIX:
+        case JSONParser.SUFFIX:
+        case GeoJSONParser.SUFFIX:
             return true;
         default:
             return false;
@@ -54,6 +56,7 @@ public class FeatureCollectionParsers {
         case MIFParser.SUFFIX: return new MIFParser();
         case SHPParser.SUFFIX: return new SHPParser();
         case GPKGParser.SUFFIX: return new GPKGParser();
+        case JSONParser.SUFFIX: return new JSONParser();
         case GeoJSONParser.SUFFIX: return new GeoJSONParser();
         default: return null;
         }
