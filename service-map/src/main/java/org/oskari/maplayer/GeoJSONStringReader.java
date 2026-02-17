@@ -11,7 +11,6 @@ import org.oskari.geojson.GeoJSONReader2;
 import org.oskari.geojson.GeoJSONSchemaDetector;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,24 +20,25 @@ public class GeoJSONStringReader {
     private static final TypeReference<HashMap<String, Object>> TYPE_REF = new TypeReference<HashMap<String, Object>>() {};
 
     public static SimpleFeatureCollection readGeoJSON(InputStream in, CoordinateReferenceSystem crs) throws Exception {
-        if (in == null) {
-            throw new IllegalArgumentException("InputStream was null");
-        }
-        try (Reader utf8Reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-            Map<String, Object> geojsonAsMap = loadJSONResource(utf8Reader);
-            boolean ignoreGeometryProperties = true;
-            SimpleFeatureType schema = GeoJSONSchemaDetector.getSchema(geojsonAsMap, crs, ignoreGeometryProperties);
-            return GeoJSONReader2.toFeatureCollection(geojsonAsMap, schema);
-        }
+        return convert(loadJSONResource(in), crs);
     }
 
     public static SimpleFeatureCollection readGeoJSON(String geojson, String srs) throws Exception{
-        CoordinateReferenceSystem sourceCRS = CRS.decode(srs);
-        return readGeoJSON(geojson, sourceCRS);
+        return readGeoJSON(geojson, CRS.decode(srs));
     }
 
     public static SimpleFeatureCollection readGeoJSON(String geojson, CoordinateReferenceSystem crs) throws Exception {
-        Map<String, Object> geojsonAsMap = loadJSONResource(geojson);
+        return convert(loadJSONResource(geojson), crs);
+    }
+
+    public static SimpleFeatureCollection readGeoJSON(File file, CoordinateReferenceSystem crs) throws Exception {
+        return convert(loadJSONResource(file), crs);
+    }
+
+    private static SimpleFeatureCollection convert(Map<String, Object> geojsonAsMap, CoordinateReferenceSystem crs) throws Exception {
+        if (crs == null) {
+            crs = GeoJSONSchemaDetector.detectCrs(geojsonAsMap);
+        }
         boolean ignoreGeometryProperties = true;
         try {
             SimpleFeatureType schema = GeoJSONSchemaDetector.getSchema(geojsonAsMap, crs, ignoreGeometryProperties);
@@ -48,11 +48,9 @@ public class GeoJSONStringReader {
         }
     }
 
-
-
-    private static Map<String, Object> loadJSONResource(Reader utf8Reader) throws Exception {
+    private static Map<String, Object> loadJSONResource(InputStream in) throws Exception {
         try {
-            return OM.readValue(utf8Reader, TYPE_REF);
+            return OM.readValue(in, TYPE_REF);
         } catch (MismatchedInputException e) {
             throw new IllegalArgumentException("Input couldn't be parsed as JSON Object");
         }
@@ -65,4 +63,13 @@ public class GeoJSONStringReader {
             throw new IllegalArgumentException("Input couldn't be parsed as JSON Object");
         }
     }
+
+    private static Map<String, Object> loadJSONResource(File file) throws Exception {
+        try {
+            return OM.readValue(file, TYPE_REF);
+        } catch (MismatchedInputException e) {
+            throw new IllegalArgumentException("Input couldn't be parsed as JSON Object");
+        }
+    }
+
 }

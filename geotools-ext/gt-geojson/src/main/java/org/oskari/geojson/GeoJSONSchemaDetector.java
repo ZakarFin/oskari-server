@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.referencing.CRS;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
@@ -334,6 +335,28 @@ public class GeoJSONSchemaDetector {
             if (o != null && o instanceof Map) {
                 properties.put(key, mapper.apply((Map<String, Object>) o));
             }
+        }
+    }
+
+    /**
+     * Look for Named CRS object from root level
+     */
+    public static CoordinateReferenceSystem detectCrs(Map<String, Object> obj) {
+        Map<String, Object> crs = GeoJSONUtil.getMap(obj, "crs");
+        if (crs == null || !"name".equals(GeoJSONUtil.getString(crs, "type"))) {
+            return null;
+        }
+
+        Map<String, Object> properties = GeoJSONUtil.getMap(crs, "properties");
+        if (properties == null || !properties.containsKey("name")) {
+            return null;
+        }
+
+        try {
+            String name = GeoJSONUtil.getString(properties, "name");
+            return CRS.decode(name);
+        } catch (Exception e) {
+            return null;
         }
     }
 

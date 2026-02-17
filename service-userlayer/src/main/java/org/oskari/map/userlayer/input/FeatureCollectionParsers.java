@@ -2,6 +2,9 @@ package org.oskari.map.userlayer.input;
 
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+
+import java.util.concurrent.Callable;
+
 import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -34,6 +37,8 @@ public class FeatureCollectionParsers {
         case MIFParser.SUFFIX:
         case SHPParser.SUFFIX:
         case GPKGParser.SUFFIX:
+        case JSONParser.SUFFIX:
+        case GeoJSONParser.SUFFIX:
             return true;
         default:
             return false;
@@ -51,6 +56,8 @@ public class FeatureCollectionParsers {
         case MIFParser.SUFFIX: return new MIFParser();
         case SHPParser.SUFFIX: return new SHPParser();
         case GPKGParser.SUFFIX: return new GPKGParser();
+        case JSONParser.SUFFIX: return new JSONParser();
+        case GeoJSONParser.SUFFIX: return new GeoJSONParser();
         default: return null;
         }
     }
@@ -63,12 +70,19 @@ public class FeatureCollectionParsers {
      */
     public static SimpleFeatureCollection read(SimpleFeatureSource src,
             CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS) throws ServiceException, UserLayerException {
+        return read(() -> src.getFeatures(), sourceCRS, targetCRS);
+    }
+
+    static SimpleFeatureCollection read(
+        Callable<SimpleFeatureCollection> providerFn,
+        CoordinateReferenceSystem sourceCRS,
+        CoordinateReferenceSystem targetCRS) throws ServiceException, UserLayerException {
         MathTransform transform = getTransform(sourceCRS, targetCRS);
         try {
-            SimpleFeatureType newSchema = SimpleFeatureTypeBuilder.retype(src.getSchema(), targetCRS);
+            SimpleFeatureCollection sfc = providerFn.call();
+            SimpleFeatureType newSchema = SimpleFeatureTypeBuilder.retype(sfc.getSchema(), targetCRS);
             SimpleFeatureBuilder b = new SimpleFeatureBuilder(newSchema);
             DefaultFeatureCollection fc = new DefaultFeatureCollection(null, newSchema);
-            SimpleFeatureCollection sfc = src.getFeatures();
 
             try (SimpleFeatureIterator it = sfc.features()) {
                 while (it.hasNext()) {
