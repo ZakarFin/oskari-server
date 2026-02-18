@@ -107,6 +107,8 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
     private static final int MAX_SIZE_MEMORY = 128 * KB;
 
     private static final int MAX_RETRY_RANDOM_UUID = 100;
+    private static final String NATIVE_SRS = "oskari.native.srs";
+    private static final String FALLBACK_NATIVE_SRS = "EPSG:3857";
 
     Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
     private final DiskFileItemFactory diskFileItemFactory = DiskFileItemFactory.builder().setPath(tempDir).setBufferSize(MAX_SIZE_MEMORY).get();
@@ -143,14 +145,14 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
             myFeaturesMaxFileSize = PropertyUtil.getOptional(PROPERTY_MYFEATURES_MAX_FILE_SIZE_MB, 10) * MB;
             unzippiedFileSizeLimit = 15 * myFeaturesMaxFileSize; // Max size of unzipped data, 15 * the zip size
         }
-
-        String sourceEPSG = params.getHttpParam(PARAM_SOURCE_EPSG_KEY);
+        String sourceEPSG = params.getHttpParam(PARAM_SOURCE_EPSG_KEY, PropertyUtil.get(NATIVE_SRS, FALLBACK_NATIVE_SRS));
         List<FileItem> fileItems = getFileItems(params.getRequest());
         SimpleFeatureCollection fc;
         Map<String, String> formParams;
         Set<String> validFiles = new HashSet<>();
         FileItem zipFile = null;
         try {
+
             CoordinateReferenceSystem sourceCRS = decodeCRS(sourceEPSG);
             CoordinateReferenceSystem targetCRS = myFeaturesService.getNativeCRS();
             zipFile = fileItems.stream()
@@ -164,7 +166,8 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
             formParams = getFormParams(fileItems);
             log.debug("Parsed form parameters:", formParams);
 
-            MyFeaturesLayer layer = store(fc, params.getUser().getUuid(), formParams);
+            // need sourceCRS to be able to guess an srid for features' geometries
+            MyFeaturesLayer layer = store(fc, params.getUser().getUuid(), formParams, sourceCRS);
 
             AuditLog.user(params.getClientIp(), params.getUser())
                     .withParam("filename", zipFile.getName())
@@ -480,12 +483,13 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         return FeatureCollectionParsers.getByFileExt(ext);
     }
 
-    private MyFeaturesLayer store(SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams) throws ImportMyFeaturesException {
+    private MyFeaturesLayer store(
+            SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams, CoordinateReferenceSystem sourceCRS) throws ImportMyFeaturesException {
         List<MyFeaturesFieldInfo> fields = getFields(fc.getSchema());
         List<MyFeaturesFeature> features = toFeatures(fc, fields, MAX_FEATURES);
         boolean addFID = features.stream().anyMatch(f -> f.getProperties().has(MyFeaturesFieldInfo.FID.getName()));
         MyFeaturesLayer layer = createLayer(ownerUuid, fields, addFID, formParams);
-        myFeaturesService.createFeatures(layer.getId(), features);
+        myFeaturesService.createFeatures(layer.getId(), features, sourceCRS);
         // Fetch updated version (featureCount and extent)
         layer = myFeaturesService.getLayer(layer.getId());
 

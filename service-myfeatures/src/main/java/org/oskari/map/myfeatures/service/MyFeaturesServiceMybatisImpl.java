@@ -5,14 +5,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
+import fi.nls.oskari.map.geometry.ProjectionHelper;
+import fi.nls.oskari.map.geometry.WKTHelper;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 
 import fi.nls.oskari.annotation.Oskari;
@@ -24,6 +30,15 @@ import fi.nls.oskari.log.LogFactory;
 import fi.nls.oskari.log.Logger;
 import fi.nls.oskari.mybatis.MyBatisHelper;
 import fi.nls.oskari.util.PropertyUtil;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.locationtech.jts.geom.Geometry;
+import org.oskari.geojson.GeoJSON;
+import org.oskari.geojson.GeoJSONWriter;
+
+import static fi.nls.oskari.map.geometry.ProjectionHelper.getSRID;
+import static fi.nls.oskari.map.geometry.WKTHelper.parseWKT;
 
 @Oskari
 public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
@@ -37,6 +52,7 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
     private final CoordinateReferenceSystem nativeCRS;
     private final int batchSize;
     private final SqlSessionFactory factory;
+    private static final GeoJSONWriter geojsonWriter = new GeoJSONWriter();
 
     public MyFeaturesServiceMybatisImpl() {
         this(DatasourceHelper.getInstance().getDataSource(DatasourceHelper.getInstance().getOskariDataSourceName("myfeatures")));
@@ -194,11 +210,67 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
     }
 
     @Override
-    public void createFeatures(UUID layerId, List<MyFeaturesFeature> features) {
+    public JSONObject getFeaturesAsGeoJSON(UUID layerId, String srs)  {
+        try (SqlSession session = factory.openSession()) {
+            MyFeaturesMapper mapper = getMapper(session);
+
+            List<MyFeaturesFeature> features = mapper.findFeatures(layerId);
+            JSONObject featureCollection = this.toGeoJSONFeatureCollection(features, srs);
+            return featureCollection;
+        }
+    }
+
+    private JSONObject toGeoJSONFeatureCollection(List<MyFeaturesFeature> featuresList, String targetSRSName) {
+        if (featuresList == null || featuresList.isEmpty()) {
+            return null;
+        }
+        JSONObject json = new JSONObject();
+        try {
+            json.put(GeoJSON.TYPE, GeoJSON.FEATURE_COLLECTION);
+            json.put("crs", geojsonWriter.writeCRSObject(targetSRSName));
+
+            JSONArray features = new JSONArray(featuresList.stream().map(feature -> this.toGeoJSONFeature(feature, targetSRSName)).collect(Collectors.toList()));
+            json.put(GeoJSON.FEATURES, features);
+
+        } catch(JSONException ex) {
+            LOG.warn("Failed to create GeoJSON FeatureCollection");
+        }
+        return json;
+    }
+
+    private JSONObject toGeoJSONFeature(MyFeaturesFeature feature, String targetSRSName) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("id", feature.getId());
+            jsonObject.put("geometry_name", GeoJSON.GEOMETRY);
+            jsonObject.put(GeoJSON.TYPE, GeoJSON.FEATURE);
+
+            String sourceSRSName = "EPSG:" + feature.getDatabaseSRID();
+            Geometry transformed = WKTHelper.transform(parseWKT(feature.getGeometry().toString()), sourceSRSName, targetSRSName);
+            JSONObject geoJsonGeometry = geojsonWriter.writeGeometry(transformed);
+            jsonObject.put(GeoJSON.GEOMETRY, geoJsonGeometry);
+            jsonObject.put("properties", feature.getProperties());
+
+        } catch(JSONException ex) {
+            LOG.warn("Failed to convert MyFeaturesFeature to GeoJSONFeature");
+        }
+
+        return jsonObject;
+    }
+
+    @Override
+    public void createFeatures(UUID layerId, List<MyFeaturesFeature> features, CoordinateReferenceSystem sourceCRS) {
         layerId = Objects.requireNonNull(layerId);
         if (features.isEmpty()) {
             return;
         }
+        Integer sourceSRID = 0;
+        try {
+            sourceSRID = CRS.lookupEpsgCode(sourceCRS, true);
+        } catch (FactoryException e) {
+            LOG.warn("Cannot find srid for ", sourceCRS.getCoordinateSystem().getName().toString());
+        }
+
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
             Instant now = mapper.now().toInstant();
@@ -206,6 +278,7 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
             for (MyFeaturesFeature feature : features) {
                 feature.setCreated(now);
                 feature.setUpdated(now);
+                feature.getGeometry().setSRID(sourceSRID);
                 mapper.insertFeature(layerId, feature);
                 batchCount++;
                 // Flushes batch statements and clears local session cache

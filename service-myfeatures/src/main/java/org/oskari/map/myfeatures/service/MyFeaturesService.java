@@ -8,6 +8,7 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.service.OskariComponent;
+import org.json.JSONObject;
 
 /**
  * All input geometries are expected to be in native coordinate reference system
@@ -29,10 +30,11 @@ public abstract class MyFeaturesService extends OskariComponent {
 
     public abstract List<MyFeaturesFeature> getFeatures(UUID layerId);
     public abstract List<MyFeaturesFeature> getFeaturesByBbox(UUID layerId, double minX, double minY, double maxX, double maxY);
+    public abstract JSONObject getFeaturesAsGeoJSON(UUID layerId, String srsName);
 
     public abstract void deleteFeaturesByLayerId(UUID layerId);
 
-    public abstract void createFeatures(UUID layerId, List<MyFeaturesFeature> features);
+    public abstract void createFeatures(UUID layerId, List<MyFeaturesFeature> features, CoordinateReferenceSystem sourceCRS);
 
     public abstract List<MyFeaturesLayer> getLayersByOwnerUuid(String ownerUuid);
     public abstract void deleteLayersByOwnerUuid(String ownerUuid);
