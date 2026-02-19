@@ -8,8 +8,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
-
-import fi.nls.oskari.map.geometry.ProjectionHelper;
 import fi.nls.oskari.map.geometry.WKTHelper;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -17,8 +15,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 
 import fi.nls.oskari.annotation.Oskari;
@@ -37,7 +33,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.oskari.geojson.GeoJSON;
 import org.oskari.geojson.GeoJSONWriter;
 
-import static fi.nls.oskari.map.geometry.ProjectionHelper.getSRID;
 import static fi.nls.oskari.map.geometry.WKTHelper.parseWKT;
 
 @Oskari
@@ -147,13 +142,14 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
 
     @Override
     public void createFeature(UUID layerId, MyFeaturesFeature feature) {
+        int sourceSRID = this.getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
 
             Instant now = mapper.now().toInstant();
             feature.setCreated(now);
             feature.setUpdated(now);
-
+            feature.getGeometry().setSRID(sourceSRID);
             mapper.insertFeature(layerId, feature);
             mapper.refreshLayerMetadata(layerId);
 
@@ -259,18 +255,12 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
     }
 
     @Override
-    public void createFeatures(UUID layerId, List<MyFeaturesFeature> features, CoordinateReferenceSystem sourceCRS) {
+    public void createFeatures(UUID layerId, List<MyFeaturesFeature> features) {
         layerId = Objects.requireNonNull(layerId);
         if (features.isEmpty()) {
             return;
         }
-        Integer sourceSRID = 0;
-        try {
-            sourceSRID = CRS.lookupEpsgCode(sourceCRS, true);
-        } catch (FactoryException e) {
-            LOG.warn("Cannot find srid for ", sourceCRS.getCoordinateSystem().getName().toString());
-        }
-
+        Integer sourceSRID = getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
             Instant now = mapper.now().toInstant();
@@ -296,6 +286,16 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
         }
     }
 
+    private Integer getSourceSRID(CoordinateReferenceSystem crs) {
+        Integer sourceSRID = 0;
+        try {
+            sourceSRID = CRS.lookupEpsgCode(crs, true);
+        } catch (FactoryException e) {
+            LOG.warn("Cannot find srid for ", crs.getCoordinateSystem().getName().toString());
+        }
+
+        return sourceSRID;
+    }
     @Override
     public List<MyFeaturesLayer> getLayersByOwnerUuid(String ownerId) {
         if (factory == null) {

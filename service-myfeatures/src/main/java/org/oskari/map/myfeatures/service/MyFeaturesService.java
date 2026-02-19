@@ -34,7 +34,7 @@ public abstract class MyFeaturesService extends OskariComponent {
 
     public abstract void deleteFeaturesByLayerId(UUID layerId);
 
-    public abstract void createFeatures(UUID layerId, List<MyFeaturesFeature> features, CoordinateReferenceSystem sourceCRS);
+    public abstract void createFeatures(UUID layerId, List<MyFeaturesFeature> features);
 
     public abstract List<MyFeaturesLayer> getLayersByOwnerUuid(String ownerUuid);
     public abstract void deleteLayersByOwnerUuid(String ownerUuid);

@@ -166,8 +166,7 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
             formParams = getFormParams(fileItems);
             log.debug("Parsed form parameters:", formParams);
 
-            // need sourceCRS to be able to guess an srid for features' geometries
-            MyFeaturesLayer layer = store(fc, params.getUser().getUuid(), formParams, sourceCRS);
+            MyFeaturesLayer layer = store(fc, params.getUser().getUuid(), formParams);
 
             AuditLog.user(params.getClientIp(), params.getUser())
                     .withParam("filename", zipFile.getName())
@@ -484,12 +483,12 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
     }
 
     private MyFeaturesLayer store(
-            SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams, CoordinateReferenceSystem sourceCRS) throws ImportMyFeaturesException {
+            SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams) throws ImportMyFeaturesException {
         List<MyFeaturesFieldInfo> fields = getFields(fc.getSchema());
         List<MyFeaturesFeature> features = toFeatures(fc, fields, MAX_FEATURES);
         boolean addFID = features.stream().anyMatch(f -> f.getProperties().has(MyFeaturesFieldInfo.FID.getName()));
         MyFeaturesLayer layer = createLayer(ownerUuid, fields, addFID, formParams);
-        myFeaturesService.createFeatures(layer.getId(), features, sourceCRS);
+        myFeaturesService.createFeatures(layer.getId(), features);
         // Fetch updated version (featureCount and extent)
         layer = myFeaturesService.getLayer(layer.getId());
 
