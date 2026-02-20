@@ -159,11 +159,13 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
 
     @Override
     public void updateFeature(UUID layerId, MyFeaturesFeature feature) {
+        int sourceSRID = this.getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
 
             Instant now = mapper.now().toInstant();
             feature.setUpdated(now);
+            feature.getGeometry().setSRID(sourceSRID);
 
             mapper.updateFeature(feature);
             mapper.refreshLayerMetadata(layerId);

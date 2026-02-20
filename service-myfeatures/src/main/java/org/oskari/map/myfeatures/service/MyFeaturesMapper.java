@@ -82,7 +82,9 @@ public interface MyFeaturesMapper {
     })
     public MyFeaturesFeature findFeatureById(long featureId);
 
-    @Select("UPDATE myfeatures_feature SET updated = #{updated}, geom = #{geometry}, properties = #{properties}::json WHERE id = #{id}")
+    @Select("UPDATE myfeatures_feature SET " +
+            "updated = #{updated}, " +
+            "geom = ST_setSRID(ST_GeomFromWKB(#{geometry}::bytea), #{applicationSRID}), properties = #{properties}::json WHERE id = #{id}")
     public void updateFeature(MyFeaturesFeature feature);
 
     @Delete("DELETE FROM myfeatures_feature WHERE id = #{featureId}")
