@@ -3,26 +3,26 @@ package org.oskari.control.myfeatures;
 import fi.nls.oskari.annotation.OskariActionRoute;
 import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
-import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
+import fi.nls.oskari.control.RestActionHandler;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.log.LogFactory;
 import fi.nls.oskari.log.Logger;
-import fi.nls.oskari.service.ServiceException;
+import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.PropertyUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
+import org.oskari.map.myfeatures.service.MyFeaturesService;
 import org.oskari.user.User;
-
 import java.io.BufferedWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @OskariActionRoute("ExportMyFeaturesLayer")
-public class ExportMyFeaturesHandler extends MyFeaturesFeatureHandler {
+public class ExportMyFeaturesHandler extends RestActionHandler {
     private final static Logger LOG = LogFactory.getLogger(ExportMyFeaturesHandler.class);
     private static final String PARAM_SRS = "srs";
     private static final String PARAM_LAYER_ID = "layerId";
@@ -31,6 +31,18 @@ public class ExportMyFeaturesHandler extends MyFeaturesFeatureHandler {
     private static final String FILE_TYPE = "application/json";
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private MyFeaturesService service;
+
+    @Override
+    public void init() {
+        if (service == null) {
+            setService(OskariComponentManager.getComponentOfType(MyFeaturesService.class));
+        }
+    }
+
+    void setService(MyFeaturesService myFeaturesService) {
+        this.service = Objects.requireNonNull(myFeaturesService);
+    }
 
     @Override
     public void handleGet(ActionParameters params) throws ActionException {
@@ -62,6 +74,11 @@ public class ExportMyFeaturesHandler extends MyFeaturesFeatureHandler {
             LOG.warn(e);
             throw new ActionException("Failed to export features");
         }
+    }
+
+
+    protected MyFeaturesService getService() {
+        return service;
     }
 
 }
