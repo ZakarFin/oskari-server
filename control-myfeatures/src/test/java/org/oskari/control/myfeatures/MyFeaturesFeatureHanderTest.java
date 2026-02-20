@@ -47,7 +47,7 @@ public class MyFeaturesFeatureHanderTest {
         assertEquals(expected.getProperties(), actual.getProperties());
 
         String response = handler.toJSONString(actual.toDomain(new ObjectMapper()));
-        String expectedResponse = "{'id':0,'created':null,'updated':null,'geometry':{'type':'Point','coordinates':[125.6,10.1]},'properties':{'fid':'abc123','name':'Dinagat Islands'}}"
+        String expectedResponse = "{'id':0,'created':null,'updated':null,'geometry':{'type':'Point','coordinates':[125.6,10.1]},'properties':{'fid':'abc123','name':'Dinagat Islands'},\"databaseSRID\":0,\"applicationSRID\":0}"
                 .replace('\'', '"');
         assertEquals(expectedResponse, response);
     }

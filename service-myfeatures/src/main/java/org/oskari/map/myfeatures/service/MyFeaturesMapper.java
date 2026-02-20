@@ -5,6 +5,7 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Results;
@@ -69,7 +70,7 @@ public interface MyFeaturesMapper {
             "   ST_setSRID(ST_GeomFromWKB(#{feature.geometry}::bytea), #{feature.applicationSRID}), " +
             "   #{feature.properties}::json)")
     @Options(useGeneratedKeys = true, keyProperty = "feature.id", keyColumn = "id")
-    public void insertFeature(UUID layerId, MyFeaturesFeature feature);
+    public void insertFeature(@Param("layerId")UUID layerId, @Param("feature") MyFeaturesFeature feature);
 
     @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, st_srid(geom) as srid, properties FROM myfeatures_feature WHERE id = #{featureId}")
     @Results(id = "MyFeaturesFeatureResult", value = {
@@ -99,7 +100,7 @@ public interface MyFeaturesMapper {
     public List<MyFeaturesFeature> findFeaturesByBbox(UUID layerId, double minX, double minY, double maxX, double maxY);
 
     @Update("UPDATE myfeatures_feature SET geom = ST_FlipCoordinates(geom), updated = #{now} WHERE layer_id = #{layerId}")
-    public void swapAxisOrder(UUID layerId, Instant now);
+    public void swapAxisOrder(@Param("layerId")UUID layerId, @Param("now")Instant now);
 
     // Don't touch `updated` as this is caused by update of the features, not an update on the layer
     @Update(
