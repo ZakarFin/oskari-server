@@ -145,7 +145,7 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
             myFeaturesMaxFileSize = PropertyUtil.getOptional(PROPERTY_MYFEATURES_MAX_FILE_SIZE_MB, 10) * MB;
             unzippiedFileSizeLimit = 15 * myFeaturesMaxFileSize; // Max size of unzipped data, 15 * the zip size
         }
-        String sourceEPSG = PropertyUtil.get(NATIVE_SRS, FALLBACK_NATIVE_SRS);
+        String sourceEPSG = params.getHttpParam(PARAM_SOURCE_EPSG_KEY);
         List<FileItem> fileItems = getFileItems(params.getRequest());
         SimpleFeatureCollection fc;
         Map<String, String> formParams;
