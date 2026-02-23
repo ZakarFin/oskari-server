@@ -209,13 +209,9 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
 
     @Override
     public JSONObject getFeaturesAsGeoJSON(UUID layerId, String srs)  {
-        try (SqlSession session = factory.openSession()) {
-            MyFeaturesMapper mapper = getMapper(session);
-
-            List<MyFeaturesFeature> features = mapper.findFeatures(layerId);
+            List<MyFeaturesFeature> features =  getFeatures(layerId);
             JSONObject featureCollection = this.toGeoJSONFeatureCollection(features, srs);
             return featureCollection;
-        }
     }
 
     private JSONObject toGeoJSONFeatureCollection(List<MyFeaturesFeature> featuresList, String targetSRSName) {
