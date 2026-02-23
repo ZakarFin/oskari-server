@@ -8,7 +8,6 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.service.OskariComponent;
-import org.json.JSONObject;
 
 /**
  * All input geometries are expected to be in native coordinate reference system
