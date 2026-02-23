@@ -4,6 +4,7 @@ import fi.nls.oskari.annotation.OskariActionRoute;
 import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
 import fi.nls.oskari.control.RestActionHandler;
+import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.log.LogFactory;
 import fi.nls.oskari.log.Logger;
@@ -11,6 +12,7 @@ import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.PropertyUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
+import org.oskari.map.myfeatures.service.MyFeaturesFeatureHelper;
 import org.oskari.map.myfeatures.service.MyFeaturesService;
 import org.oskari.user.User;
 import java.io.BufferedWriter;
@@ -18,6 +20,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -53,7 +56,8 @@ public class ExportMyFeaturesHandler extends RestActionHandler {
         final boolean prettify = indent > 0 && indent <= 8;
         try {
 
-            JSONObject featureCollection = getService().getFeaturesAsGeoJSON(layerId, srs);
+            List<MyFeaturesFeature> featureList = getService().getFeatures(layerId);
+            JSONObject featureCollection = MyFeaturesFeatureHelper.toGeoJSONFeatureCollection(featureList, srs);
             String layerName = getService().getLayer(layerId).getName("fi");
             String timestamp = LocalDate.now().format(TIME_FORMAT);
             String fileName = layerName + "_" + timestamp + "." + FILE_EXT;

@@ -30,7 +30,6 @@ public abstract class MyFeaturesService extends OskariComponent {
 
     public abstract List<MyFeaturesFeature> getFeatures(UUID layerId);
     public abstract List<MyFeaturesFeature> getFeaturesByBbox(UUID layerId, double minX, double minY, double maxX, double maxY);
-    public abstract JSONObject getFeaturesAsGeoJSON(UUID layerId, String srsName);
 
     public abstract void deleteFeaturesByLayerId(UUID layerId);
 
