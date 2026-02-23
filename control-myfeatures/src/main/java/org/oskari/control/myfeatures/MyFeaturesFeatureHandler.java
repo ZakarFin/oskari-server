@@ -133,10 +133,6 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         ResponseHelper.writeJsonResponse(params, om, feature);
     }
 
-    protected MyFeaturesService getService() {
-        return service;
-    }
-
     @Override
     public void handleDelete(ActionParameters params) throws ActionException {
         UUID layerId = parseLayerId(params);
