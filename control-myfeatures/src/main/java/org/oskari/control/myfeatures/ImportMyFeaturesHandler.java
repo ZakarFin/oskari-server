@@ -107,8 +107,6 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
     private static final int MAX_SIZE_MEMORY = 128 * KB;
 
     private static final int MAX_RETRY_RANDOM_UUID = 100;
-    private static final String NATIVE_SRS = "oskari.native.srs";
-    private static final String FALLBACK_NATIVE_SRS = "EPSG:3857";
 
     Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
     private final DiskFileItemFactory diskFileItemFactory = DiskFileItemFactory.builder().setPath(tempDir).setBufferSize(MAX_SIZE_MEMORY).get();
