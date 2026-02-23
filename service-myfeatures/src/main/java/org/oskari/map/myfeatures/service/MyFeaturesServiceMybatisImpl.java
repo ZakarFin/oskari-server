@@ -7,11 +7,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 import javax.sql.DataSource;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 
@@ -27,9 +27,7 @@ import fi.nls.oskari.util.PropertyUtil;
 
 @Oskari
 public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
-
     private static final Logger LOG = LogFactory.getLogger(MyFeaturesServiceMybatisImpl.class);
-
     private static final String INSERT_BATCH_SIZE = "myfeatures.mybatis.batch.size";
     private static final String NATIVE_SRS = "oskari.native.srs";
     private static final String FALLBACK_NATIVE_SRS = "EPSG:3857";
@@ -131,13 +129,14 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
 
     @Override
     public void createFeature(UUID layerId, MyFeaturesFeature feature) {
+        int sourceSRID = this.getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
 
             Instant now = mapper.now().toInstant();
             feature.setCreated(now);
             feature.setUpdated(now);
-
+            feature.getGeometry().setSRID(sourceSRID);
             mapper.insertFeature(layerId, feature);
             mapper.refreshLayerMetadata(layerId);
 
@@ -147,11 +146,13 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
 
     @Override
     public void updateFeature(UUID layerId, MyFeaturesFeature feature) {
+        int sourceSRID = this.getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
 
             Instant now = mapper.now().toInstant();
             feature.setUpdated(now);
+            feature.getGeometry().setSRID(sourceSRID);
 
             mapper.updateFeature(feature);
             mapper.refreshLayerMetadata(layerId);
@@ -199,6 +200,7 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
         if (features.isEmpty()) {
             return;
         }
+        Integer sourceSRID = getSourceSRID(this.nativeCRS);
         try (SqlSession session = factory.openSession()) {
             MyFeaturesMapper mapper = getMapper(session);
             Instant now = mapper.now().toInstant();
@@ -206,6 +208,7 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
             for (MyFeaturesFeature feature : features) {
                 feature.setCreated(now);
                 feature.setUpdated(now);
+                feature.getGeometry().setSRID(sourceSRID);
                 mapper.insertFeature(layerId, feature);
                 batchCount++;
                 // Flushes batch statements and clears local session cache
@@ -223,6 +226,16 @@ public class MyFeaturesServiceMybatisImpl extends MyFeaturesService {
         }
     }
 
+    private Integer getSourceSRID(CoordinateReferenceSystem crs) {
+        Integer sourceSRID = 0;
+        try {
+            sourceSRID = CRS.lookupEpsgCode(crs, true);
+        } catch (FactoryException e) {
+            LOG.warn("Cannot find srid for ", crs.getCoordinateSystem().getName().toString());
+        }
+
+        return sourceSRID;
+    }
     @Override
     public List<MyFeaturesLayer> getLayersByOwnerUuid(String ownerId) {
         if (factory == null) {

@@ -143,7 +143,6 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
             myFeaturesMaxFileSize = PropertyUtil.getOptional(PROPERTY_MYFEATURES_MAX_FILE_SIZE_MB, 10) * MB;
             unzippiedFileSizeLimit = 15 * myFeaturesMaxFileSize; // Max size of unzipped data, 15 * the zip size
         }
-
         String sourceEPSG = params.getHttpParam(PARAM_SOURCE_EPSG_KEY);
         List<FileItem> fileItems = getFileItems(params.getRequest());
         SimpleFeatureCollection fc;
@@ -151,6 +150,7 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         Set<String> validFiles = new HashSet<>();
         FileItem zipFile = null;
         try {
+
             CoordinateReferenceSystem sourceCRS = decodeCRS(sourceEPSG);
             CoordinateReferenceSystem targetCRS = myFeaturesService.getNativeCRS();
             zipFile = fileItems.stream()
@@ -480,7 +480,8 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         return FeatureCollectionParsers.getByFileExt(ext);
     }
 
-    private MyFeaturesLayer store(SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams) throws ImportMyFeaturesException {
+    private MyFeaturesLayer store(
+            SimpleFeatureCollection fc, String ownerUuid, Map<String, String> formParams) throws ImportMyFeaturesException {
         List<MyFeaturesFieldInfo> fields = getFields(fc.getSchema());
         List<MyFeaturesFeature> features = toFeatures(fc, fields, MAX_FEATURES);
         boolean addFID = features.stream().anyMatch(f -> f.getProperties().has(MyFeaturesFieldInfo.FID.getName()));

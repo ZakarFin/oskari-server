@@ -5,6 +5,7 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.ResultMap;
 import org.apache.ibatis.annotations.Results;
@@ -61,27 +62,36 @@ public interface MyFeaturesMapper {
     @Delete("DELETE FROM myfeatures_layer WHERE owner_uuid = #{ownerUuid}")
     public int deleteLayersByOwnerUuid(String ownerUuid);
 
-    @Insert("INSERT INTO myfeatures_feature (layer_id, created, updated, geom, properties) VALUES (#{layerId}, #{feature.created}, #{feature.updated}, #{feature.geometry}, #{feature.properties}::json)")
+    @Insert("INSERT INTO myfeatures_feature (layer_id, created, updated, geom, properties) " +
+            "VALUES (" +
+            "   #{layerId}, " +
+            "   #{feature.created}, " +
+            "   #{feature.updated}, " +
+            "   ST_setSRID(ST_GeomFromWKB(#{feature.geometry}::bytea), #{feature.applicationSRID}), " +
+            "   #{feature.properties}::json)")
     @Options(useGeneratedKeys = true, keyProperty = "feature.id", keyColumn = "id")
-    public void insertFeature(UUID layerId, MyFeaturesFeature feature);
+    public void insertFeature(@Param("layerId")UUID layerId, @Param("feature") MyFeaturesFeature feature);
 
-    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE id = #{featureId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, st_srid(geom) as srid, properties FROM myfeatures_feature WHERE id = #{featureId}")
     @Results(id = "MyFeaturesFeatureResult", value = {
         @Result(property="id", column="id", id=true),
         @Result(property="created", column="created"),
         @Result(property="updated", column="updated"),
         @Result(property="geometry", column="geom"),
+        @Result(property="databaseSRID", column="srid"),
         @Result(property="properties", column="properties")
     })
     public MyFeaturesFeature findFeatureById(long featureId);
 
-    @Select("UPDATE myfeatures_feature SET updated = #{updated}, geom = #{geometry}, properties = #{properties}::json WHERE id = #{id}")
+    @Select("UPDATE myfeatures_feature SET " +
+            "updated = #{updated}, " +
+            "geom = ST_setSRID(ST_GeomFromWKB(#{geometry}::bytea), #{applicationSRID}), properties = #{properties}::json WHERE id = #{id}")
     public void updateFeature(MyFeaturesFeature feature);
 
     @Delete("DELETE FROM myfeatures_feature WHERE id = #{featureId}")
     public void deleteFeature(long featureId);
 
-    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, st_srid(geom) as srid, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
     @ResultMap("MyFeaturesFeatureResult")
     public List<MyFeaturesFeature> findFeatures(UUID layerId);
 
@@ -90,7 +100,7 @@ public interface MyFeaturesMapper {
     public List<MyFeaturesFeature> findFeaturesByBbox(UUID layerId, double minX, double minY, double maxX, double maxY);
 
     @Update("UPDATE myfeatures_feature SET geom = ST_FlipCoordinates(geom), updated = #{now} WHERE layer_id = #{layerId}")
-    public void swapAxisOrder(UUID layerId, Instant now);
+    public void swapAxisOrder(@Param("layerId")UUID layerId, @Param("now")Instant now);
 
     // Don't touch `updated` as this is caused by update of the features, not an update on the layer
     @Update(
