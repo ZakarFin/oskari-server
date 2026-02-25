@@ -93,7 +93,7 @@ public class MyFeaturesLayerHandler extends RestActionHandler {
         layer.setOwnerUuid(params.getUser().getUuid());
         layer.setLayerFields(createLayer.getLayerFields());
         layer.setLocale(new JSONObject(createLayer.getLocale()));
-
+        layer.setAttributes(new JSONObject(createLayer.getAttributes()));
         JSONObject jsonStyle;
         try {
             jsonStyle = new JSONObject(om.writeValueAsString(createLayer.getStyle()));

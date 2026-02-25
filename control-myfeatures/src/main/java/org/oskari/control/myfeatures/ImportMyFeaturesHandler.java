@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import fi.nls.oskari.control.*;
 
+import org.json.JSONArray;
 import org.oskari.log.AuditLog;
 import org.oskari.map.myfeatures.service.MyFeaturesService;
 import org.oskari.map.userlayer.input.FeatureCollectionParser;
@@ -99,6 +100,10 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
     private static final String PARAM_SOURCE_EPSG_KEY = "sourceEpsg";
     private static final String KEY_STYLE = "style";
     private static final String KEY_LOCALE = "locale";
+    // attributes json
+    private static final String KEY_DEFAULT = "default";
+    private static final String KEY_FILTER = "filter";
+    private static final String KEY_DATA = "data";
 
     private static final int KB = 1024;
     private static final int MB = 1024 * KB;
@@ -579,6 +584,9 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         JSONObject locale = JSONHelper.createJSONObject(formParams.get(KEY_LOCALE));
         JSONObject style = JSONHelper.createJSONObject(formParams.get(KEY_STYLE));
 
+        // create default attributes which only allow showing the fields defined in dataset
+        JSONObject attributes = getAttributesJSON(fields);
+
         WFSLayerOptions options = new WFSLayerOptions();
         options.setDefaultFeatureStyle(style);
 
@@ -593,11 +601,24 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         layer.setLayerFields(layerFields);
         layer.setLocale(locale);
         layer.setLayerOptions(options);
-
+        layer.setAttributes(attributes);
         myFeaturesService.createLayer(layer);
         return layer;
     }
 
+    private static JSONObject getAttributesJSON(List<MyFeaturesFieldInfo> fields ) {
+        JSONObject attributes = new JSONObject();
+        JSONObject data = new JSONObject();
+        JSONObject filter = new JSONObject();
+        List<String> fieldNames = fields.stream().map(MyFeaturesFieldInfo::getName).toList();
+        JSONArray defaultFieldNames = new JSONArray(fieldNames);
+
+        filter.put(KEY_DEFAULT, defaultFieldNames);
+        data.put(KEY_FILTER, filter);
+        attributes.put(KEY_DATA, data);
+        return attributes;
+
+    }
     private static Optional<MyFeaturesFieldInfo> attribute(AttributeDescriptor attr) {
         String name = attr.getLocalName();
         if (MyFeaturesFieldInfo.FID.getName().equalsIgnoreCase(name)) {
