@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,11 +31,11 @@ public class MyFeaturesFeatureHanderTest {
     @Test
     public void parsePayloadWorksWithGeoJSONGeometry() throws Exception {
         CreateMyFeaturesFeature expected = new CreateMyFeaturesFeature();
-        expected.setLayerId(UUID.fromString("6a58d4ee-d91f-45ea-bc56-0870b8866793"));
+        expected.setLayerId("myf_6a58d4ee-d91f-45ea-bc56-0870b8866793");
         expected.setGeometry(new GeometryFactory().createPoint(new Coordinate(125.6, 10.1)));
         expected.setProperties(Map.of("fid", "abc123", "name", "Dinagat Islands"));
 
-        String input = "{'layerId': '6a58d4ee-d91f-45ea-bc56-0870b8866793', 'geometry': {'type': 'Point','coordinates': [125.6, 10.1]}, 'properties': {'fid': 'abc123','name': 'Dinagat Islands'}}"
+        String input = "{'layerId': 'myf_6a58d4ee-d91f-45ea-bc56-0870b8866793', 'geometry': {'type': 'Point','coordinates': [125.6, 10.1]}, 'properties': {'fid': 'abc123','name': 'Dinagat Islands'}}"
                 .replace('\'', '"');
         ActionParameters params = mock(ActionParameters.class);
         when(params.getPayLoad()).thenReturn(input);
@@ -47,7 +46,7 @@ public class MyFeaturesFeatureHanderTest {
         assertEquals(expected.getProperties(), actual.getProperties());
 
         String response = handler.toJSONString(actual.toDomain(new ObjectMapper()));
-        String expectedResponse = "{'id':0,'created':null,'updated':null,'geometry':{'type':'Point','coordinates':[125.6,10.1]},'properties':{'fid':'abc123','name':'Dinagat Islands'},\"databaseSRID\":0,\"applicationSRID\":0}"
+        String expectedResponse = "{'id':0,'created':null,'updated':null,'geometry':{'type':'Point','coordinates':[125.6,10.1]},'properties':{'fid':'abc123','name':'Dinagat Islands'}}"
                 .replace('\'', '"');
         assertEquals(expectedResponse, response);
     }

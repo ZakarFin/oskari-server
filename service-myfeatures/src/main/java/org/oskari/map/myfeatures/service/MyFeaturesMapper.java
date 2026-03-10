@@ -67,31 +67,32 @@ public interface MyFeaturesMapper {
             "   #{layerId}, " +
             "   #{feature.created}, " +
             "   #{feature.updated}, " +
-            "   ST_setSRID(ST_GeomFromWKB(#{feature.geometry}::bytea), #{feature.applicationSRID}), " +
+            "   #{feature.geometry}, " +
             "   #{feature.properties}::json)")
     @Options(useGeneratedKeys = true, keyProperty = "feature.id", keyColumn = "id")
-    public void insertFeature(@Param("layerId")UUID layerId, @Param("feature") MyFeaturesFeature feature);
+    public void insertFeature(@Param("layerId") UUID layerId, @Param("feature") MyFeaturesFeature feature);
 
-    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, st_srid(geom) as srid, properties FROM myfeatures_feature WHERE id = #{featureId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE id = #{featureId}")
     @Results(id = "MyFeaturesFeatureResult", value = {
         @Result(property="id", column="id", id=true),
         @Result(property="created", column="created"),
         @Result(property="updated", column="updated"),
         @Result(property="geometry", column="geom"),
-        @Result(property="databaseSRID", column="srid"),
         @Result(property="properties", column="properties")
     })
     public MyFeaturesFeature findFeatureById(long featureId);
 
     @Select("UPDATE myfeatures_feature SET " +
             "updated = #{updated}, " +
-            "geom = ST_setSRID(ST_GeomFromWKB(#{geometry}::bytea), #{applicationSRID}), properties = #{properties}::json WHERE id = #{id}")
+            "geom = #{geometry}, " +
+            "properties = #{properties}::json " +
+            "WHERE id = #{id}")
     public void updateFeature(MyFeaturesFeature feature);
 
     @Delete("DELETE FROM myfeatures_feature WHERE id = #{featureId}")
     public void deleteFeature(long featureId);
 
-    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, st_srid(geom) as srid, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
+    @Select("SELECT id, created, updated, ST_AsBinary(geom) AS geom, properties FROM myfeatures_feature WHERE layer_id = #{layerId}")
     @ResultMap("MyFeaturesFeatureResult")
     public List<MyFeaturesFeature> findFeatures(UUID layerId);
 

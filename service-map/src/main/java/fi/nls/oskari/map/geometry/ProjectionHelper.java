@@ -24,6 +24,7 @@ import org.geotools.api.referencing.operation.MathTransform;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * Helper for transformations
@@ -33,7 +34,8 @@ public class ProjectionHelper implements PointTransformer {
     private static Logger log = LogFactory.getLogger(ProjectionHelper.class);
     private static String LONG_SRS_NAME_BASE = "urn:ogc:def:crs:EPSG::";
 
-    private static final String UNIT_DEGREES = "deg";
+    private static final String[] UNIT_DEGREES = { "deg", "°" };
+
     public static Point transformPoint(final double lon, final double lat, final String sourceSRS, final String targetSRS) {
         return transformPoint(new Point(lon, lat), sourceSRS, targetSRS);
     }
@@ -127,8 +129,10 @@ public class ProjectionHelper implements PointTransformer {
     }
 
     public static boolean isUnitDegrees(CoordinateReferenceSystem crs) {
-        return UNIT_DEGREES.equals(crs.getCoordinateSystem().getAxis(0).getUnit().toString());
+        String unit = crs.getCoordinateSystem().getAxis(0).getUnit().toString();
+        return Arrays.stream(UNIT_DEGREES).anyMatch(unit::equals);
     }
+
     /**
      * Return epsg short
      * urn:ogc:def:crs:EPSG::32635  --> EPSG:32635

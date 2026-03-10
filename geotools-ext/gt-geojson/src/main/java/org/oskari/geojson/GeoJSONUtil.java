@@ -14,6 +14,25 @@ public class GeoJSONUtil {
      */
     public static final String DEFAULT_GEOMETRY_ATTRIBUTE_NAME = "_geometry";
 
+    // For WGS84: 11.132mm precision at equator, more precise elsewhere, max error 5.5mm
+    private static final int NUM_DECIMAL_PLACES_DEGREE = 7;
+    // For metric projections: 10mm precision, max error 5mm
+    private static final int NUM_DECIMAL_PLACES_OTHER = 2;
+
+    /**
+     * Get number of decimal places to use (maximum) when writing out the GeoJSON response.
+     * The goal is to reduce the size of the actual response thereby reducing the amount
+     * of memory and network used to serve the response while maintaining a precision that
+     * still far exceedes the needs for our purposes
+     *
+     * @returns number of decimal places to use
+     * - NUM_DECIMAL_PLACES_DEGREE for degrees
+     * - NUM_DECIMAL_PLACES_OTHER for others (metres, feet, what have you)
+     */
+    public static int getNumDecimals(boolean isUnitDegrees) {
+        return isUnitDegrees ? NUM_DECIMAL_PLACES_DEGREE : NUM_DECIMAL_PLACES_OTHER;
+    }
+
     @SuppressWarnings("unchecked")
     public static Map<String, Object> getMap(Map<String, Object> map, String key) {
         return (Map<String, Object>) map.get(key);

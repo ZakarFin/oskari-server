@@ -3,10 +3,12 @@ package fi.nls.oskari.domain.map.myfeatures;
 public class MyFeaturesFieldInfo {
 
     public static final MyFeaturesFieldInfo FID;
+    public static final MyFeaturesFieldInfo CREATED;
+    public static final MyFeaturesFieldInfo UPDATED;
     static {
-        FID = new MyFeaturesFieldInfo();
-        FID.setName("fid");
-        FID.setType(MyFeaturesFieldType.String);
+        FID = MyFeaturesFieldInfo.of("_fid", MyFeaturesFieldType.String);
+        CREATED = MyFeaturesFieldInfo.of("_created", MyFeaturesFieldType.Timestamp);
+        UPDATED = MyFeaturesFieldInfo.of("_updated", MyFeaturesFieldType.Timestamp);
     }
 
     private String name;

@@ -237,10 +237,10 @@ public class GeoJSONWriter {
         return json;
     }
 
-    public JSONObject writeCRSObject(String srsName) {
+    public static JSONObject writeCRSObject(String srsName) {
         JSONObject crs = new JSONObject();
         try {
-            crs.put("type", "name");
+            crs.put(GeoJSON.TYPE, "name");
             JSONObject crsProperties = new JSONObject();
             crsProperties.put("name", srsName);
             crs.put(GeoJSON.PROPERTIES, crsProperties);
