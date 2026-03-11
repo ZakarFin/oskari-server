@@ -96,13 +96,14 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
     private static SimpleFeature convertToSimpleFeature(List<MyFeaturesFieldInfo> fields, SimpleFeatureBuilder b, MyFeaturesFeature feature) {
         JSONObject properties = feature.getProperties();
         b.reset();
-        // geom, created, updated
-        b.set(0, feature.getGeometry());
-        b.set(1, feature.getCreated());
-        b.set(2, feature.getUpdated());
+        // geom
+        int index = 0;
+        b.set(index++, feature.getGeometry());
+        // b.set(1, feature.getCreated());
+        // b.set(2, feature.getUpdated());
         for (int i = 0; i < fields.size(); i++) {
             MyFeaturesFieldInfo field = fields.get(i);
-            b.set(i + 3, properties.opt(field.getName()));
+            b.set(index++, properties.opt(field.getName()));
         }
         return b.buildFeature(Long.toString(feature.getId()));
     }
@@ -112,8 +113,8 @@ public final class MyFeaturesWFSHelper extends UserLayerService {
         b.setName("myfeatures");
         b.setNamespaceURI("https://oskari.org");
         b.add(GEOM_PROP_NAME, Geometry.class);
-        b.add(MyFeaturesFieldInfo.CREATED.getName(), OffsetDateTime.class);
-        b.add(MyFeaturesFieldInfo.UPDATED.getName(), OffsetDateTime.class);
+        // b.add(MyFeaturesFieldInfo.CREATED.getName(), OffsetDateTime.class);
+        // b.add(MyFeaturesFieldInfo.UPDATED.getName(), OffsetDateTime.class);
         b.setDefaultGeometry(GEOM_PROP_NAME);
         for (MyFeaturesFieldInfo field : fields) {
             b.add(field.getName(), field.getType().getOutputBinding());
