@@ -20,6 +20,7 @@ import org.oskari.map.userlayer.input.SHPParser;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFieldInfo;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFieldType;
+import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 
 public class ImportMyFeaturesHandlerTest {
 
@@ -52,7 +53,7 @@ public class ImportMyFeaturesHandlerTest {
         }
 
         Map<String, MyFeaturesFeature> myFeaturesById = myFeatures.stream()
-                .collect(Collectors.toMap(x -> x.getProperties().get("fid").toString(), x -> x));
+                .collect(Collectors.toMap(x -> x.getProperties().get(MyFeaturesFieldInfo.FID.getName()).toString(), x -> x));
 
         // Check that we find matching feature by fid and all of their properties match
         for (SimpleFeatureIterator it = sfc.features(); it.hasNext();) {

@@ -84,4 +84,8 @@ public class CoordinateTransformer {
         return new GeoJSONFeatureCollection(fc, newSchema);
     }
 
+    public Geometry transform(Geometry g) throws TransformException {
+        return g != null && needsTransform() ? JTS.transform(g, transform) : g;
+    }
+
 }

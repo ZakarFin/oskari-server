@@ -12,7 +12,6 @@ public class MyFeaturesFeature {
     private Instant updated;
     private Geometry geometry;
     private JSONObject properties;
-    private int databaseSRID;
 
     public long getId() {
         return id;
@@ -52,18 +51,6 @@ public class MyFeaturesFeature {
 
     public void setProperties(JSONObject properties) {
         this.properties = properties;
-    }
-
-    public int getDatabaseSRID() {
-        return databaseSRID;
-    }
-
-    public void setDatabaseSRID(int databaseSRID) {
-        this.databaseSRID = databaseSRID;
-    }
-
-    public int getApplicationSRID() {
-        return this.geometry.getSRID();
     }
 
 }

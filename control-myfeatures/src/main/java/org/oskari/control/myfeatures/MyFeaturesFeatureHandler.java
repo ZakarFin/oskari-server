@@ -2,6 +2,7 @@ package org.oskari.control.myfeatures;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.nls.oskari.annotation.OskariActionRoute;
+import fi.nls.oskari.control.ActionConstants;
 import fi.nls.oskari.control.ActionDeniedException;
 import fi.nls.oskari.control.ActionException;
 import fi.nls.oskari.control.ActionParameters;
@@ -11,14 +12,17 @@ import fi.nls.oskari.domain.map.myfeatures.MyFeaturesFeature;
 import fi.nls.oskari.domain.map.myfeatures.MyFeaturesLayer;
 import fi.nls.oskari.service.OskariComponentManager;
 import fi.nls.oskari.util.ResponseHelper;
-import org.json.JSONObject;
+
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Geometry;
 import org.oskari.control.myfeatures.dto.CreateMyFeaturesFeature;
 import org.oskari.control.myfeatures.dto.UpdateMyFeaturesFeature;
 import org.oskari.map.myfeatures.service.MyFeaturesService;
+import org.oskari.service.wfs3.CoordinateTransformer;
 import org.oskari.user.User;
 import org.oskari.util.ObjectMapperProvider;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,6 +32,8 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
 
     public static final String PARAM_LAYER_ID = "layerId";
     public static final String PARAM_ID = "id";
+
+    private static final String PARAM_CRS = "crs";
 
     private MyFeaturesService service;
     private ObjectMapper om;
@@ -55,6 +61,7 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         params.requireLoggedInUser();
     }
 
+    /* Read via GetWFSFeatures
     @Override
     public void handleGet(ActionParameters params) throws ActionException {
         UUID layerId = parseLayerId(params);
@@ -76,34 +83,27 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
 
         ResponseHelper.writeJsonResponse(params, om, features);
     }
+    */
 
-
-    JSONObject getPayloadAsJSON(ActionParameters params)  throws ActionException {
-        JSONObject payloadJSON = params.getPayLoadJSON();
-        UUID layerId = MyFeaturesLayer.parseLayerId(payloadJSON.optString(PARAM_LAYER_ID, "")).orElse(null);
-        if (layerId == null) {
-            throw new ActionDeniedException("Could not parse layer UUID from " + payloadJSON.getString(PARAM_LAYER_ID));
-        }
-
-        payloadJSON.put(PARAM_LAYER_ID, layerId.toString());
-        return payloadJSON;
-    }
     @Override
     public void handlePost(ActionParameters params) throws ActionException {
-        JSONObject payloadJSON = getPayloadAsJSON(params);
-        CreateMyFeaturesFeature createFeature = parsePayload(payloadJSON.toString(), CreateMyFeaturesFeature.class);
-        UUID layerId = createFeature.getLayerId();
+        CreateMyFeaturesFeature createFeature = parsePayload(params, CreateMyFeaturesFeature.class);
 
         List<String> validationErrors = createFeature.validate();
         if (!validationErrors.isEmpty()) {
             throw new ActionParamsException(toJSONString(validationErrors));
         }
 
+        UUID layerId = MyFeaturesLayer.parseLayerId(createFeature.getLayerId()).get();
+
         MyFeaturesFeature feature = createFeature.toDomain(om);
         User user = params.getUser();
         if (!canEdit(user, layerId)) {
             throw new ActionDeniedException("User: " + user.getId() + " tried to insert feature to layer " + layerId);
         }
+
+        // MyFeaturesService expects all input geometries in native crs
+        transformToNativeCRS(params, service, feature);
 
         service.createFeature(layerId, feature);
 
@@ -112,14 +112,14 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
 
     @Override
     public void handlePut(ActionParameters params) throws ActionException {
-        JSONObject payloadJSON = getPayloadAsJSON(params);
-        UpdateMyFeaturesFeature updateFeature = parsePayload(payloadJSON.toString(), UpdateMyFeaturesFeature.class);
-        UUID layerId = updateFeature.getLayerId();
+        UpdateMyFeaturesFeature updateFeature = parsePayload(params, UpdateMyFeaturesFeature.class);
 
         List<String> validationErrors = updateFeature.validate();
         if (!validationErrors.isEmpty()) {
             throw new ActionParamsException(toJSONString(validationErrors));
         }
+
+        UUID layerId = MyFeaturesLayer.parseLayerId(updateFeature.getLayerId()).get();
 
         MyFeaturesFeature feature = updateFeature.toDomain(om);
 
@@ -127,6 +127,9 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
         if (!canEdit(user, layerId)) {
             throw new ActionDeniedException("User: " + user.getId() + " tried to modify feature " + feature.getId());
         }
+
+        // MyFeaturesService expects all input geometries in native crs
+        transformToNativeCRS(params, service, feature);
 
         service.updateFeature(layerId, feature);
 
@@ -140,8 +143,7 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
 
         User user = params.getUser();
         if (!canEdit(user, layerId)) {
-            throw new ActionDeniedException(
-                    "User: " + user.getId() + " tried to delete feature(s) from layer " + layerId);
+            throw new ActionDeniedException("User: " + user.getId() + " tried to delete feature(s) from layer " + layerId);
         }
 
         if (featureId == Long.MIN_VALUE) {
@@ -154,14 +156,6 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
     <T> T parsePayload(ActionParameters params, Class<T> c) throws ActionParamsException {
         try {
             return om.readValue(params.getPayLoad(), c);
-        } catch (Exception e) {
-            throw new ActionParamsException("Failed to parse payload", e);
-        }
-    }
-
-    <T> T parsePayload(String payload, Class<T> c) throws ActionParamsException {
-        try {
-            return om.readValue(payload, c);
         } catch (Exception e) {
             throw new ActionParamsException("Failed to parse payload", e);
         }
@@ -183,6 +177,30 @@ public class MyFeaturesFeatureHandler extends RestActionHandler {
             return om.writeValueAsString(obj);
         } catch (Exception e) {
             throw new ActionException("Failed to encode response to JSON", e);
+        }
+    }
+
+    private static void transformToNativeCRS(ActionParameters params, MyFeaturesService service, MyFeaturesFeature f) throws ActionException {
+        try {
+            CoordinateReferenceSystem from = getCrs(params);
+            CoordinateReferenceSystem to = service.getNativeCRS();
+            CoordinateTransformer t = new CoordinateTransformer(from, to);
+            Geometry g1 = f.getGeometry();
+            Geometry g2 = t.transform(g1);
+            f.setGeometry(g2);
+        } catch (ActionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ActionException("Failed to perform coordinate transformation", e);
+        }
+    }
+
+    private static CoordinateReferenceSystem getCrs(ActionParameters params) throws ActionParamsException {
+        String srs = params.getHttpParam(ActionConstants.PARAM_SRS, params.getHttpParam(PARAM_CRS));
+        try {
+            return CRS.decode(srs, true);
+        } catch (Exception e) {
+            throw new ActionParamsException("Invalid " + ActionConstants.PARAM_SRS);
         }
     }
 
