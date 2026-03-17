@@ -253,7 +253,7 @@ public class ImportMyFeaturesHandler extends RestActionHandler {
         try {
             request.setCharacterEncoding("UTF-8");
             JakartaServletFileUpload upload = new JakartaServletFileUpload(diskFileItemFactory);
-            upload.setSizeMax(myFeaturesMaxFileSize);
+            upload.setMaxSize(myFeaturesMaxFileSize);
             return upload.parseRequest(request);
         } catch (UnsupportedEncodingException | FileUploadException e) {
             throw new ActionException("Failed to read request", e);
