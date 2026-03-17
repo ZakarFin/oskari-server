@@ -122,9 +122,10 @@ The one packaged without this is 2.15.1
         <resilience4j.version>2.4.0</resilience4j.version>
         <!-- Test deps versions -->
         <mockito.version>5.19.0</mockito.version>
-        <junit.version>5.13.4</junit.version>
+        <!-- https://github.com/junit-team/junit-framework/wiki/Upgrading-to-JUnit-6.0 -->
+        <junit.version>5.14.3</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
-        <xmlunit.version>2.10.4</xmlunit.version>
+        <xmlunit.version>2.11.0</xmlunit.version>
         <h2database.version>2.4.240</h2database.version>
         <h2gis.version>2.2.5</h2gis.version>
 
