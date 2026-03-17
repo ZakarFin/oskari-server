@@ -212,7 +212,7 @@ public class CreateUserLayerHandler extends RestActionHandler {
         try {
             request.setCharacterEncoding("UTF-8");
             JakartaServletFileUpload upload = new JakartaServletFileUpload(diskFileItemFactory);
-            upload.setSizeMax(userlayerMaxFileSize);
+            upload.setMaxSize(userlayerMaxFileSize);
             return upload.parseRequest(request);
         } catch (UnsupportedEncodingException | FileUploadException e) {
             throw new ActionException("Failed to read request", e);
