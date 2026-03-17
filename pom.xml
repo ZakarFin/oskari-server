@@ -96,7 +96,8 @@ The one packaged without this is 2.15.1
 
         <tomcat.version>10.1.52</tomcat.version>
         <mybatis.version>3.5.19</mybatis.version>
-        <flyway.version>11.12.0</flyway.version>
+        <!-- Version 12 of Flywaydb uses Jackson 3.x -->
+        <flyway.version>11.20.3</flyway.version>
         <postgresql.version>42.7.10</postgresql.version>
         <hikaricp.version>7.0.2</hikaricp.version>
 
