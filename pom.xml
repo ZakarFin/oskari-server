@@ -85,7 +85,7 @@ The one packaged without this is 2.15.1
         <commons-io.version>2.21.0</commons-io.version>
         <commons-csv.version>1.14.1</commons-csv.version>
         <xmlgraphics-fop.version>2.11</xmlgraphics-fop.version>
-        <poi-ooxml.version>5.4.1</poi-ooxml.version>
+        <poi-ooxml.version>5.5.1</poi-ooxml.version>
 
         <jsoup.version>1.21.2</jsoup.version>
 
