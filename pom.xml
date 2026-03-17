@@ -115,7 +115,11 @@ The one packaged without this is 2.15.1
         <flexjson.version>2.0</flexjson.version>
         <!-- https://pdfbox.apache.org/3.0/migration.html -->
         <pdfbox.version>3.0.3</pdfbox.version>
-        <resilience4j.version>2.3.0</resilience4j.version>
+        <!--
+        Resilience4J next version (3.0) will require Java 21:
+        https://github.com/resilience4j/resilience4j/pull/2415
+         -->
+        <resilience4j.version>2.4.0</resilience4j.version>
         <!-- Test deps versions -->
         <mockito.version>5.19.0</mockito.version>
         <junit.version>5.13.4</junit.version>
