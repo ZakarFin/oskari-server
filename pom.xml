@@ -85,7 +85,7 @@ The one packaged without this is 2.15.1
         <commons-io.version>2.21.0</commons-io.version>
         <commons-csv.version>1.14.1</commons-csv.version>
         <xmlgraphics-fop.version>2.11</xmlgraphics-fop.version>
-        <poi-ooxml.version>5.4.1</poi-ooxml.version>
+        <poi-ooxml.version>5.5.1</poi-ooxml.version>
 
         <jsoup.version>1.22.1</jsoup.version>
 
@@ -114,7 +114,7 @@ The one packaged without this is 2.15.1
         <mvt.version>1.4.1</mvt.version>
         <flexjson.version>2.0</flexjson.version>
         <!-- https://pdfbox.apache.org/3.0/migration.html -->
-        <pdfbox.version>3.0.3</pdfbox.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
         <!--
         Resilience4J next version (3.0) will require Java 21:
         https://github.com/resilience4j/resilience4j/pull/2415
