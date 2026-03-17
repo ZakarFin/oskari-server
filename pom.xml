@@ -114,7 +114,7 @@ The one packaged without this is 2.15.1
         <mvt.version>1.4.1</mvt.version>
         <flexjson.version>2.0</flexjson.version>
         <!-- https://pdfbox.apache.org/3.0/migration.html -->
-        <pdfbox.version>3.0.3</pdfbox.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
         <resilience4j.version>2.3.0</resilience4j.version>
         <!-- Test deps versions -->
         <mockito.version>5.19.0</mockito.version>
