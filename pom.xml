@@ -47,23 +47,23 @@
         <jdk.version>17</jdk.version>
         <oskari.version>${project.version}</oskari.version>
 
-        <spring.version>6.2.11</spring.version>
-        <spring-security.version>6.5.5</spring-security.version>
+        <spring.version>6.2.17</spring.version>
+        <spring-security.version>6.5.9</spring-security.version>
         <!--
-        session-bom 3.4.1 uses:
-        https://github.com/spring-projects/spring-session/blob/3.5.0/gradle/libs.versions.toml#L41-L43
-        which is aligned with core 6.2.7 and security 6.5.0 versions
-        https://central.sonatype.com/artifact/org.springframework.session/spring-session-bom/3.4.2
-        https://mvnrepository.com/artifact/org.springframework.session/spring-session-bom/3.5.2
-         and spring-data 2025.0.0 (https://github.com/spring-projects/spring-session/blob/3.5.2/gradle/libs.versions.toml#L41)
-         which uses spring-data-redis 3.5.0:
-         - https://github.com/spring-projects/spring-data-redis/releases/tag/3.5.0
-         - https://github.com/spring-projects/spring-data-bom/releases/tag/2025.0.0
+        session-bom 3.5.5 uses:
+        https://github.com/spring-projects/spring-session/blob/3.5.5/gradle/libs.versions.toml#L41-L43
+        which is aligned with core 6.2.16 and security 6.5.8 versions
+        https://central.sonatype.com/artifact/org.springframework.session/spring-session-bom/3.5.5
+        https://mvnrepository.com/artifact/org.springframework.session/spring-session-bom/3.5.5
+         and spring-data 2025.0.9 (https://github.com/spring-projects/spring-session/blob/3.5.5/gradle/libs.versions.toml#L41)
+         which uses spring-data-redis 3.5.9:
+         - https://github.com/spring-projects/spring-data-redis/releases/tag/3.5.9
+         - https://github.com/spring-projects/spring-data-bom/releases/tag/2025.0.9
          Which uses Jedis 6.0.0:
-         - https://github.com/spring-projects/spring-data-redis/blob/3.5.0/pom.xml#L27
+         - https://github.com/spring-projects/spring-data-redis/blob/3.5.9/pom.xml#L27
          Hence we need the same jedis version
          -->
-        <spring.session.version>3.5.2</spring.session.version>
+        <spring.session.version>3.5.5</spring.session.version>
 
         <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
         <jakarta.servlet.jsp.version>3.1.0</jakarta.servlet.jsp.version>
