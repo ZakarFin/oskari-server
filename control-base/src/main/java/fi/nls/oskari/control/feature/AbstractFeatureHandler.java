@@ -168,7 +168,7 @@ public abstract class AbstractFeatureHandler extends RestActionHandler {
             Iterator keys = props.keys();
             while (keys.hasNext()) {
                 String name = (String) keys.next();
-                feature.addProperty(name, props.getString(name));
+                feature.addProperty(name, props.optString(name, null));
             }
         }
         if (jsonObject.has("geometry")) {

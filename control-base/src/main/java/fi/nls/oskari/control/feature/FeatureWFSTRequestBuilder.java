@@ -36,9 +36,12 @@ public class FeatureWFSTRequestBuilder extends WFSTRequestBuilder {
             xsw.writeCharacters(property.getKey());
             xsw.writeEndElement();
 
-            xsw.writeStartElement(WFS, "Value");
-            xsw.writeCharacters(property.getValue());
-            xsw.writeEndElement();
+            if (property.getValue() != null) {
+                // Omitting <Value> element sets the property to null
+                xsw.writeStartElement(WFS, "Value");
+                xsw.writeCharacters(property.getValue());
+                xsw.writeEndElement();
+            }
 
             xsw.writeEndElement();
         }
@@ -61,6 +64,10 @@ public class FeatureWFSTRequestBuilder extends WFSTRequestBuilder {
         xsw.writeStartElement(feature.getLayerName());
 
         for (Map.Entry<String, String> property : feature.getProperties().entrySet()) {
+            if (property.getValue() == null) {
+                // Skip nulls
+                continue;
+            }
             xsw.writeStartElement(property.getKey());
             xsw.writeCharacters(property.getValue());
             xsw.writeEndElement();

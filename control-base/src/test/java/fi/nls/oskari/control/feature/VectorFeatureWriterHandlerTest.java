@@ -1,6 +1,7 @@
 package fi.nls.oskari.control.feature;
 
 import fi.nls.oskari.domain.map.Feature;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.CoordinateSequence;
@@ -88,6 +89,27 @@ public class VectorFeatureWriterHandlerTest {
         Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(wfsTransactionUTF8));
         String posList = doc.getElementsByTagNameNS("http://www.opengis.net/gml", "posList").item(0).getTextContent();
         return Arrays.stream(posList.split(" ")).mapToDouble(Double::parseDouble).toArray();
+    }
+
+    @Test
+    public void testNonStringPropertyInGeoJSON() throws Exception {
+        String geojson = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"MultiPoint\",\"coordinates\":[[327710.84,6824632.15]]},\"properties\":{\"omistaja\":\"testi\",\"valmistumisvuosi\":2926,\"asuntoalat\":null},\"id\":\"feature.1\"}";
+
+        AbstractFeatureHandler handler = new AbstractFeatureHandler() {
+            @Override
+            protected Feature initFeatureByLayer(String layerId) {
+                Feature f = new Feature();
+                f.setLayerName("foo");
+                f.setGMLGeometryProperty("geometry");
+                return f;
+            }
+        };
+
+        Feature feature = handler.getFeature(new JSONObject(geojson), "1", "EPSG:3067", "feature.1");
+
+        Assertions.assertEquals("testi", feature.getProperties().get("omistaja"));
+        Assertions.assertEquals("2926", feature.getProperties().get("valmistumisvuosi"));
+        Assertions.assertNull(feature.getProperties().get("asuntoalat"));
     }
 
 }
