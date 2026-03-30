@@ -1,5 +1,61 @@
 # Release Notes
 
+## 3.3.0
+
+For a full list of changes see:
+https://github.com/oskariorg/oskari-server/milestone/57?closed=1
+
+### Admin functionalities
+
+- Improvements to Capabilities parsing for (WMS) service scale denominator handling and metadata id detection.
+- Service coverage bounding box for layers is now updated from metadata service (when available and linked) when a map layer is saved by admin. Previously coverage bbox was only updated as a nightly scheduled task that was problematic with faulty coverage bbox.
+- User administration: improved search functionality.
+
+### Bug fixes
+
+- Fixed an issue that prevented paginated results from being read/used from OGC API Features APIs.
+- Content-editor/WFS-T: fixed an issue with JSONObject.getString() API change that blocked for example numeric values from being processed correctly and added handling for null values.
+
+### New functionality
+
+- Import dataset/userlayer: added support for GeoJSON format. It's now possible to export myplaces as GeoJSON and import them as userlayers and/or myfeatures.
+
+### Myfeatures functionality
+
+Lots of tuning and tweaking on the server side. The initial functionality is close to being finalized from server perspective.
+
+- Dropped special fid handling for myfeatures
+- Removal of dates when loading features (used as metadata on database)
+- Fixes, cleanup and improvements for feature editing server side functionality
+- Improvements for style handling
+- Added export functionality (features as GeoJSON)
+- Added import for GeoJSON
+
+Upcoming changes will be including migration of data from myplaces and userlayers into myfeatures that will be done as separate Flyway-migration modules so they can be used as is or tweaked per service/application needs.
+The migration will also migrate references to the layers on embedded maps. It's likely that the next Oskari version (3.4) will switch from myplaces and userlayers to myfeatures. While myplaces/userlayers will work with the next version, any new development will be done for the myfeatures functionality. It's likely that myplaces and userlayers would be removed from the codebase in the next version after 3.4 so they can be considered deprecated and on their way out.
+
+### Library updates:
+
+- Spring framework 6.2.11 -> 6.2.17
+- Spring security 6.5.5 -> 6.5.9
+- Spring session 3.5.2 -> 3.5.5
+- GeoTools 33.2 -> 34.2
+- FlywayDB 11.12.0 -> 11.20.3
+- Log4J 2.25.1 -> 2.25.3
+- Resilience4j 2.3.0 -> 2.4.0
+- Jackson 2.20.0 -> 2.21.1
+- commons-io 2.20.0 -> 2.21.0
+- JSoup 1.21.2 -> 1.22.1
+- Tomcat 10.1.47 -> 10.1.52
+- Postgres JDBC 42.7.7 -> 42.7.10
+- JUnit 5.13.4 -> 5.14.3
+- XmlUnit 2.10.4 -> 2.11.0
+- commons-fileupload2-jakarta-servlet6 2.0.0-M4 -> 2.0.0-M5
+- h2 2.3.232 -> 2.4.240
+- h2gis 2.3.232 -> 2.2.5
+- pdfbox 3.0.3 -> 3.0.7
+- poi-ooxml 5.4.1 -> 5.5.1
+
 ## 3.2.0
 
 For a full list of changes see:
